@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+**/node_modules
+**/dist
+**/.env.local
+**/.env.*.local
+coverage
+backups
+*.log

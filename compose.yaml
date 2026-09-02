@@ -1,0 +1,101 @@
+name: trouve-ton-artisan
+
+services:
+  frontend:
+    image: trouve-ton-artisan-frontend:production
+    build:
+      context: .
+      dockerfile: .docker/frontend/Dockerfile
+      target: production
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - application
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.trouve-ton-artisan.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.trouve-ton-artisan.entrypoints=websecure
+      - traefik.http.routers.trouve-ton-artisan.tls=true
+      - traefik.http.routers.trouve-ton-artisan.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
+      - traefik.http.services.trouve-ton-artisan.loadbalancer.server.port=8080
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, http://127.0.0.1:8080/health]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    image: trouve-ton-artisan-backend:production
+    build:
+      context: .
+      dockerfile: .docker/backend/Dockerfile
+      target: production
+    env_file:
+      - path: ./backend/.env
+        required: true
+      - path: ./backend/.env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: database
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - application
+      - database
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  database:
+    image: mysql:8.4
+    env_file:
+      - path: ./backend/.env
+        required: true
+      - path: ./backend/.env.local
+        required: false
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    networks:
+      - database
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  application:
+    internal: true
+  database:
+    internal: true
+  proxy:
+    external: true

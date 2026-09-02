@@ -4,3 +4,24 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Dependencies and generated files
+node_modules/
+frontend/dist/
+backend/dist/
+coverage/
+
+# Local framework configuration and secrets
+frontend/.env.local
+frontend/.env.*.local
+backend/.env.local
+backend/.env.*.local
+
+# Database runtime data and backups
+backups/
+*.sql.gz
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
