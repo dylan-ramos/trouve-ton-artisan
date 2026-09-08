@@ -7,6 +7,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { LoadingState } from '../components/ui/LoadingState';
 import { apiClient } from '../services/api-client';
+import { getPublicUrl } from '../services/site-url';
 import type { ArtisanSummary } from '../types/artisan';
 
 const steps = [
@@ -49,6 +50,14 @@ export function HomePage() {
       <Seo
         title="Trouve ton artisan en Auvergne-Rhône-Alpes"
         description="Trouvez et contactez un artisan qualifié en Auvergne-Rhône-Alpes."
+        canonicalPath="/"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Trouve ton artisan',
+          url: getPublicUrl('/'),
+          inLanguage: 'fr-FR',
+        }}
       />
       <section className="home-hero">
         <div className="container home-hero__content">

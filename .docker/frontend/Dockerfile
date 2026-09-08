@@ -14,7 +14,9 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 FROM development AS build
 ARG VITE_API_URL=/api
+ARG VITE_SITE_URL
 ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_SITE_URL=${VITE_SITE_URL}
 RUN npm run build
 
 FROM ${NGINX_IMAGE}:${NGINX_VERSION}-alpine AS production

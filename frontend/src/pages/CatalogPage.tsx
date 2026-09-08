@@ -73,20 +73,46 @@ function CatalogResults({ request, onRetry }: CatalogResultsProps) {
       ? `Résultats pour « ${request.value} »`
       : `Artisans — ${categoryName}`;
 
+  const canonicalPath =
+    request.mode === 'category'
+      ? `/artisans/${request.value}${request.page > 1 ? `?page=${request.page}` : ''}`
+      : '/recherche';
+
   if (hasError)
     return (
-      <ErrorState
-        message="Les artisans ne peuvent pas être chargés."
-        onRetry={onRetry}
-      />
+      <>
+        <Seo
+          title={`${title} | Trouve ton artisan`}
+          description="Cette liste d’artisans est momentanément indisponible."
+          canonicalPath={canonicalPath}
+          noIndex
+        />
+        <ErrorState
+          message="Les artisans ne peuvent pas être chargés."
+          onRetry={onRetry}
+        />
+      </>
     );
-  if (!result) return <LoadingState label="Chargement des artisans…" />;
+  if (!result)
+    return (
+      <>
+        <Seo
+          title={`${title} | Trouve ton artisan`}
+          description="Consultez les artisans en Auvergne-Rhône-Alpes."
+          canonicalPath={canonicalPath}
+          noIndex={request.mode === 'search'}
+        />
+        <LoadingState label="Chargement des artisans…" />
+      </>
+    );
 
   return (
     <>
       <Seo
         title={`${title} | Trouve ton artisan`}
         description={`Consultez ${title.toLocaleLowerCase('fr-FR')} en Auvergne-Rhône-Alpes.`}
+        canonicalPath={canonicalPath}
+        noIndex={request.mode === 'search'}
       />
       <Breadcrumb current={title} />
       <h1>{title}</h1>
@@ -124,6 +150,8 @@ export function CatalogPage() {
         <Seo
           title="Recherche | Trouve ton artisan"
           description="Recherchez un artisan par nom."
+          canonicalPath="/recherche"
+          noIndex
         />
         <Breadcrumb current="Recherche" />
         <h1>Rechercher un artisan</h1>
@@ -136,6 +164,12 @@ export function CatalogPage() {
   if (!category && search.length > 100) {
     return (
       <div className="container page-section">
+        <Seo
+          title="Recherche invalide | Trouve ton artisan"
+          description="La recherche demandée est invalide."
+          canonicalPath="/recherche"
+          noIndex
+        />
         <Breadcrumb current="Recherche" />
         <h1>Recherche invalide</h1>
         <ErrorState message="La recherche ne doit pas dépasser 100 caractères." />

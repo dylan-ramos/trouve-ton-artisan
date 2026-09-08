@@ -12,6 +12,7 @@ services:
         NGINX_IMAGE: ${NGINX_IMAGE:-nginxinc/nginx-unprivileged}
         NGINX_VERSION: ${NGINX_VERSION:-1.29}
         VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_SITE_URL: ${SITE_URL}
     depends_on:
       backend:
         condition: service_healthy

@@ -8,6 +8,7 @@ import { Seo } from '../components/Seo';
 import { ErrorState } from '../components/ui/ErrorState';
 import { LoadingState } from '../components/ui/LoadingState';
 import { apiClient } from '../services/api-client';
+import { getPublicUrl } from '../services/site-url';
 import type { ArtisanDetail } from '../types/artisan';
 
 function safeWebsite(value: string | null) {
@@ -29,6 +30,16 @@ function ArtisanContent({ artisan }: { artisan: ArtisanDetail }) {
       <Seo
         title={`${artisan.name} | Trouve ton artisan`}
         description={`${artisan.name}, ${artisan.specialty.name} à ${artisan.city}. Contactez cet artisan en Auvergne-Rhône-Alpes.`}
+        canonicalPath={`/artisan/${artisan.slug}`}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'ProfessionalService',
+          name: artisan.name,
+          description: artisan.about,
+          url: getPublicUrl(`/artisan/${artisan.slug}`),
+          areaServed: artisan.city,
+          ...(website ? { sameAs: website } : {}),
+        }}
       />
       <Breadcrumb current={artisan.name} />
       <article className="artisan-profile">
@@ -116,14 +127,30 @@ export function ArtisanPage() {
   return (
     <div className="container page-section">
       {hasError ? (
-        <ErrorState
-          message="Cette fiche artisan ne peut pas être chargée."
-          onRetry={retry}
-        />
+        <>
+          <Seo
+            title="Fiche artisan indisponible | Trouve ton artisan"
+            description="Cette fiche artisan est momentanément indisponible."
+            canonicalPath={`/artisan/${slug}`}
+            noIndex
+          />
+          <ErrorState
+            message="Cette fiche artisan ne peut pas être chargée."
+            onRetry={retry}
+          />
+        </>
       ) : artisan ? (
         <ArtisanContent artisan={artisan} />
       ) : (
-        <LoadingState label="Chargement de la fiche artisan…" />
+        <>
+          <Seo
+            title="Fiche artisan | Trouve ton artisan"
+            description="Consultez la fiche de cet artisan en Auvergne-Rhône-Alpes."
+            canonicalPath={`/artisan/${slug}`}
+            noIndex
+          />
+          <LoadingState label="Chargement de la fiche artisan…" />
+        </>
       )}
     </div>
   );
