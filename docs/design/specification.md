@@ -8,7 +8,8 @@ Ce document prépare la réalisation dans Figma et l'implémentation React. Il n
 - Une action principale claire par zone, vocabulaire simple et contenu lisible.
 - Navigation et formulaires utilisables au clavier, au toucher et au lecteur d'écran.
 - Contraste WCAG 2.1 AA, focus visible, texte redimensionnable et aucun sens porté uniquement par une couleur ou une icône.
-- Réutiliser la palette, le logo et le favicon fournis. Graphik ne sera intégrée que si un fichier et une licence utilisable sont disponibles.
+- Réutiliser la palette, le logo et le favicon fournis.
+- Utiliser Montserrat comme typographie officielle du site. Ce choix est volontaire : Graphik est une police propriétaire dont la redistribution n'est pas autorisée avec les sources disponibles, tandis que Montserrat est distribuée sous licence libre SIL OFL 1.1 et peut être auto-hébergée avec sa licence.
 
 Palette de l'identité visuelle :
 
