@@ -11,11 +11,18 @@ const categoriesResponse = {
 function mockCategories() {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(categoriesResponse), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+    vi.fn().mockImplementation((input: string) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify(
+            input.endsWith('/categories') ? categoriesResponse : { data: [] },
+          ),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+      ),
     ),
   );
 }
@@ -35,7 +42,10 @@ describe('App', () => {
     );
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Trouve ton artisan' }),
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Trouvez l’artisan adapté à votre besoin',
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /contenu principal/i }),

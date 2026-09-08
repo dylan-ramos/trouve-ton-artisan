@@ -1,4 +1,5 @@
 import type { CategorySummary } from '../types/category';
+import type { ArtisanSummary } from '../types/artisan';
 
 interface DataResponse<T> {
   data: T;
@@ -32,6 +33,13 @@ export const apiClient = {
   async getCategories(signal?: AbortSignal) {
     const response = await get<DataResponse<CategorySummary[]>>(
       '/categories',
+      signal,
+    );
+    return response.data;
+  },
+  async getFeaturedArtisans(signal?: AbortSignal) {
+    const response = await get<DataResponse<ArtisanSummary[]>>(
+      '/artisans/featured',
       signal,
     );
     return response.data;
