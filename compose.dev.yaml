@@ -3,7 +3,7 @@ services:
     image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-frontend:${APP_DEV_IMAGE_TAG:-development}
     build:
       target: development
-    command: npm run dev -- --host 0.0.0.0
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
     env_file:
       - path: ./frontend/.env
         required: true
@@ -31,7 +31,7 @@ services:
     image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-backend:${APP_DEV_IMAGE_TAG:-development}
     build:
       target: development
-    command: npm run dev
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev"
     environment:
       NODE_ENV: development
     ports:

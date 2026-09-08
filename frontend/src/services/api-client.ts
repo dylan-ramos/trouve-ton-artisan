@@ -1,5 +1,10 @@
 import type { CategorySummary } from '../types/category';
-import type { ArtisanListResponse, ArtisanSummary } from '../types/artisan';
+import type {
+  ArtisanDetail,
+  ArtisanListResponse,
+  ArtisanSummary,
+  ContactPayload,
+} from '../types/artisan';
 
 interface DataResponse<T> {
   data: T;
@@ -23,6 +28,23 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (!response.ok) {
     throw new ApiError(
       'Le service est momentanément indisponible.',
+      response.status,
+    );
+  }
+  return (await response.json()) as T;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new ApiError(
+      response.status === 429
+        ? 'Trop de messages ont été envoyés. Réessayez plus tard.'
+        : "Le message n'a pas pu être envoyé.",
       response.status,
     );
   }
@@ -53,6 +75,19 @@ export const apiClient = {
     return get<ArtisanListResponse>(
       `/categories/${encodeURIComponent(slug)}/artisans?${query.toString()}`,
       signal,
+    );
+  },
+  async getArtisan(slug: string, signal?: AbortSignal) {
+    const response = await get<DataResponse<ArtisanDetail>>(
+      `/artisans/${encodeURIComponent(slug)}`,
+      signal,
+    );
+    return response.data;
+  },
+  sendContact(slug: string, payload: ContactPayload) {
+    return post<DataResponse<{ message: string }>>(
+      `/artisans/${encodeURIComponent(slug)}/contact`,
+      payload,
     );
   },
 };

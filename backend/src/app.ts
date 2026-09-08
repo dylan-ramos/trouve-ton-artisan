@@ -5,6 +5,7 @@ import { ApiError } from './http/api-error.js';
 import { createApiRouter } from './modules/api.routes.js';
 import type { ArtisanService } from './modules/artisans/artisan.service.js';
 import type { CategoryService } from './modules/categories/category.service.js';
+import type { ContactService } from './modules/contact/contact.service.js';
 
 import {
   createHealthRouter,
@@ -16,6 +17,7 @@ export interface ApplicationDependencies {
   isProduction: boolean;
   artisanService?: ArtisanService;
   categoryService?: CategoryService;
+  contactService?: ContactService;
 }
 
 export function createApplication({
@@ -23,6 +25,7 @@ export function createApplication({
   isProduction,
   artisanService,
   categoryService,
+  contactService,
 }: ApplicationDependencies) {
   const application = express();
 
@@ -51,7 +54,9 @@ export function createApplication({
         },
       }),
     );
-    application.use(createApiRouter(categoryService, artisanService));
+    application.use(
+      createApiRouter(categoryService, artisanService, contactService),
+    );
   }
 
   application.use((_request, response) => {

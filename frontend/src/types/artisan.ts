@@ -16,6 +16,19 @@ export interface ArtisanSummary {
   };
 }
 
+export interface ArtisanDetail extends ArtisanSummary {
+  about: string;
+  websiteUrl: string | null;
+}
+
+export interface ContactPayload {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  website: string;
+}
+
 export interface ArtisanListResponse {
   data: ArtisanSummary[];
   meta: {

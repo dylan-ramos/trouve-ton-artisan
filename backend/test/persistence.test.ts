@@ -11,6 +11,8 @@ import { parseEnvironment } from '../src/config/environment.js';
 import { initializeModels, type ApplicationModels } from '../src/models.js';
 import { ArtisanService } from '../src/modules/artisans/artisan.service.js';
 import { CategoryService } from '../src/modules/categories/category.service.js';
+import { ContactService } from '../src/modules/contact/contact.service.js';
+import type { MailMessage } from '../src/modules/contact/mail-transport.js';
 
 const integrationEnabled = process.env.INTEGRATION_TEST === 'true';
 let database: Sequelize;
@@ -155,5 +157,92 @@ void describe('persistance Sequelize', { skip: !integrationEnabled }, () => {
       .get('/artisans')
       .query({ unexpected: 'value' })
       .expect(422);
+  });
+
+  void test('transmet un contact sûr sans révéler le destinataire', async () => {
+    const messages: MailMessage[] = [];
+    const artisanService = new ArtisanService(models);
+    const application = createApplication({
+      checkDatabase: () => database.authenticate(),
+      isProduction: true,
+      artisanService,
+      categoryService: new CategoryService(models),
+      contactService: new ContactService(
+        artisanService,
+        {
+          sendMail(message) {
+            messages.push(message);
+            return Promise.resolve();
+          },
+        },
+        'no-reply@trouve-ton-artisan.fr',
+      ),
+    });
+    const validContact = {
+      name: '<Dylan>',
+      email: 'dylan@example.com',
+      subject: 'Demande de tarif',
+      message: 'Bonjour, je souhaite recevoir un tarif.',
+      website: '',
+    };
+    const success = await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send(validContact)
+      .expect(202);
+    assert.deepEqual(success.body, { data: { message: 'Message envoyé.' } });
+    assert.doesNotMatch(success.text, /chocolaterie-labbe@gmail.com/);
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0]?.to, 'chocolaterie-labbe@gmail.com');
+    assert.match(messages[0].html, /&lt;Dylan&gt;/);
+    assert.doesNotMatch(messages[0].html, /<Dylan>/);
+
+    await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send({ ...validContact, website: 'https://spam.example' })
+      .expect(202);
+    assert.equal(messages.length, 1);
+    await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send({ ...validContact, subject: 'Copie\r\nBcc: target@example.com' })
+      .expect(422);
+    await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send({ ...validContact, email: 'invalide' })
+      .expect(422);
+    await request(application)
+      .post('/artisans/artisan-inconnu/contact')
+      .send(validContact)
+      .expect(404);
+    await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send(validContact)
+      .expect(429);
+    assert.equal(messages.length, 1);
+  });
+
+  void test('retourne une erreur neutre lors d’une panne SMTP', async () => {
+    const artisanService = new ArtisanService(models);
+    const application = createApplication({
+      checkDatabase: () => database.authenticate(),
+      isProduction: true,
+      artisanService,
+      categoryService: new CategoryService(models),
+      contactService: new ContactService(
+        artisanService,
+        { sendMail: () => Promise.reject(new Error('smtp secret detail')) },
+        'no-reply@trouve-ton-artisan.fr',
+      ),
+    });
+    const response = await request(application)
+      .post('/artisans/chocolaterie-labbe/contact')
+      .send({
+        name: 'Dylan Martin',
+        email: 'dylan@example.com',
+        subject: 'Demande de tarif',
+        message: 'Bonjour, je souhaite recevoir un tarif.',
+        website: '',
+      })
+      .expect(503);
+    assert.doesNotMatch(response.text, /smtp secret detail|gmail\.com/);
   });
 });

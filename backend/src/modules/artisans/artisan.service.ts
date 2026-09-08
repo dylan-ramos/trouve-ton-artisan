@@ -37,6 +37,12 @@ export class ArtisanService {
     });
   }
 
+  findContactBySlug(slug: string) {
+    return this.models.Artisan.scope('withContactEmail').findOne({
+      where: { slug },
+    });
+  }
+
   async search(input: ArtisanSearchInput) {
     const escapedSearch = input.search?.replace(/[\\%_]/g, '\\$&');
     const result = await this.models.Artisan.findAndCountAll({

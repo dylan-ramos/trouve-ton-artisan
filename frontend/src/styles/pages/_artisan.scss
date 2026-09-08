@@ -1,0 +1,81 @@
+@use '../tokens' as tokens;
+
+.artisan-profile {
+  display: grid;
+  margin-top: 1.5rem;
+  gap: 2rem;
+}
+.artisan-profile__visual {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: tokens.$border-radius-lg;
+  background: tokens.$color-background;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+.artisan-profile__fallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: linear-gradient(
+    135deg,
+    tokens.$color-primary-dark,
+    tokens.$color-primary
+  );
+  color: tokens.$color-surface;
+  font-size: clamp(4rem, 18vw, 8rem);
+  font-weight: 750;
+}
+.artisan-profile__specialty {
+  margin-bottom: 0.5rem;
+  color: tokens.$color-primary-dark;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.artisan-profile__city {
+  margin-block: 1rem;
+  font-weight: 650;
+}
+.artisan-profile__about,
+.artisan-profile__contact {
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border-radius: tokens.$border-radius-lg;
+  background: tokens.$color-surface;
+  box-shadow: tokens.$box-shadow;
+}
+.contact-form {
+  display: grid;
+  max-width: 45rem;
+  margin-top: 1.5rem;
+  gap: 1.25rem;
+}
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+}
+.contact-form__honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.contact-form__feedback {
+  min-height: 1.5rem;
+}
+@media (min-width: 768px) {
+  .artisan-profile {
+    grid-template-columns: minmax(16rem, 0.8fr) 1.2fr;
+    align-items: center;
+  }
+  .artisan-profile__about,
+  .artisan-profile__contact {
+    grid-column: 1 / -1;
+  }
+}

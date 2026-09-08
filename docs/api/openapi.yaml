@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Trouve ton artisan API
-  version: 0.4.0
+  version: 0.8.0
   description: API publique de consultation des artisans d'Auvergne-Rhône-Alpes.
 servers:
   - url: /api
@@ -60,7 +60,39 @@ paths:
         '404': { description: Artisan inconnu }
         '422': { description: Slug invalide }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/{slug}/contact:
+    post:
+      summary: Transmet une demande de contact à un artisan
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContactRequest' }
+            example:
+              name: Camille Martin
+              email: camille@example.com
+              subject: Demande de devis
+              message: Bonjour, je souhaite obtenir un devis pour mon projet.
+              website: ''
+      responses:
+        '202': { description: Demande acceptée pour transmission }
+        '404': { description: Artisan inconnu }
+        '422': { description: Corps ou champs invalides }
+        '429': { description: Limite de cinq messages en quinze minutes dépassée }
+        '503': { description: Transport de messagerie momentanément indisponible }
 components:
+  schemas:
+    ContactRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, subject, message]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 254 }
+        subject: { type: string, minLength: 3, maxLength: 150 }
+        message: { type: string, minLength: 10, maxLength: 5000 }
+        website: { type: string, maxLength: 200, description: Champ anti-robot devant rester vide }
   responses:
     TooManyRequests:
       description: Limite de 120 requêtes par minute dépassée

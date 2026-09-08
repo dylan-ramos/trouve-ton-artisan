@@ -4,15 +4,23 @@ import { parseEnvironment } from './config/environment.js';
 import { initializeModels } from './models.js';
 import { ArtisanService } from './modules/artisans/artisan.service.js';
 import { CategoryService } from './modules/categories/category.service.js';
+import { ContactService } from './modules/contact/contact.service.js';
+import { createMailTransport } from './modules/contact/mail-transport.js';
 
 const environment = parseEnvironment();
 const database = createDatabase(environment);
 const models = initializeModels(database);
+const artisanService = new ArtisanService(models);
 const application = createApplication({
   checkDatabase: async () => database.authenticate(),
   isProduction: environment.NODE_ENV === 'production',
-  artisanService: new ArtisanService(models),
+  artisanService,
   categoryService: new CategoryService(models),
+  contactService: new ContactService(
+    artisanService,
+    createMailTransport(environment),
+    environment.SMTP_FROM,
+  ),
 });
 
 const server = application.listen(environment.PORT, () => {
