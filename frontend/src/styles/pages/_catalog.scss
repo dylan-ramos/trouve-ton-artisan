@@ -1,0 +1,19 @@
+.catalog-count {
+  margin-block: 1rem 2rem;
+  font-weight: 650;
+}
+
+.catalog-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .page-link {
+    min-height: 2.75rem;
+  }
+}

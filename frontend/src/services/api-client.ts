@@ -1,5 +1,5 @@
 import type { CategorySummary } from '../types/category';
-import type { ArtisanSummary } from '../types/artisan';
+import type { ArtisanListResponse, ArtisanSummary } from '../types/artisan';
 
 interface DataResponse<T> {
   data: T;
@@ -43,5 +43,16 @@ export const apiClient = {
       signal,
     );
     return response.data;
+  },
+  searchArtisans(search: string, page: number, signal?: AbortSignal) {
+    const query = new URLSearchParams({ search, page: String(page) });
+    return get<ArtisanListResponse>(`/artisans?${query.toString()}`, signal);
+  },
+  getArtisansByCategory(slug: string, page: number, signal?: AbortSignal) {
+    const query = new URLSearchParams({ page: String(page) });
+    return get<ArtisanListResponse>(
+      `/categories/${encodeURIComponent(slug)}/artisans?${query.toString()}`,
+      signal,
+    );
   },
 };

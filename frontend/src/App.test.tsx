@@ -15,7 +15,19 @@ function mockCategories() {
       Promise.resolve(
         new Response(
           JSON.stringify(
-            input.endsWith('/categories') ? categoriesResponse : { data: [] },
+            input.endsWith('/categories')
+              ? categoriesResponse
+              : input.endsWith('/artisans/featured')
+                ? { data: [] }
+                : {
+                    data: [],
+                    meta: {
+                      page: 1,
+                      limit: 12,
+                      total: 0,
+                      totalPages: 0,
+                    },
+                  },
           ),
           {
             status: 200,
@@ -71,7 +83,7 @@ describe('App', () => {
     expect(button).toHaveTextContent('Fermer');
   });
 
-  test('encode la recherche dans la navigation', () => {
+  test('encode la recherche dans la navigation', async () => {
     mockCategories();
     render(
       <MemoryRouter>
@@ -84,7 +96,9 @@ describe('App', () => {
     fireEvent.change(search, { target: { value: '  Labbé & fils  ' } });
     fireEvent.submit(search.closest('form') as HTMLFormElement);
     expect(
-      screen.getByRole('heading', { name: 'Nos artisans' }),
+      await screen.findByRole('heading', {
+        name: 'Résultats pour « Labbé & fils »',
+      }),
     ).toBeInTheDocument();
   });
 });

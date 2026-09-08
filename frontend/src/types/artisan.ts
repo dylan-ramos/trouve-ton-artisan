@@ -15,3 +15,13 @@ export interface ArtisanSummary {
     };
   };
 }
+
+export interface ArtisanListResponse {
+  data: ArtisanSummary[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
