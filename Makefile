@@ -8,10 +8,11 @@ ENV_FILES := --env-file .env $(if $(LOCAL_ENV_FILE),--env-file .env.local)
 COMPOSE := docker compose $(ENV_FILES)
 COMPOSE_DEV := $(COMPOSE) -f compose.yaml -f compose.dev.yaml
 COMPOSE_PROD := $(COMPOSE) -f compose.yaml
+COMPOSE_TEST := $(COMPOSE) --project-name $(COMPOSE_PROJECT_NAME)-test -f compose.test.yaml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-env install format format-check lint typecheck test quality-check network config build up down restart ps logs check frontend-logs backend-logs database-logs frontend-shell backend-shell database-shell clean prod-config prod-build prod-up prod-deploy prod-down prod-restart prod-ps prod-logs
+.PHONY: help check-env install format format-check lint typecheck test test-config integration-test quality-check database-check network config build up down restart ps logs check frontend-logs backend-logs database-logs frontend-shell backend-shell database-shell clean prod-config prod-build prod-up prod-deploy prod-down prod-restart prod-ps prod-logs
 
 help: ## Affiche les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; printf "Commandes disponibles :\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -45,6 +46,12 @@ test: ## Exécute les tests des deux applications
 	@npm --prefix backend test
 	@npm --prefix frontend test
 
+test-config: check-env ## Valide la configuration des tests d'intégration
+	@$(COMPOSE_TEST) config --quiet
+
+integration-test: test-config ## Exécute les tests backend avec une base MySQL éphémère
+	@status=0; $(COMPOSE_TEST) up --build --abort-on-container-exit --exit-code-from backend-test || status=$$?; $(COMPOSE_TEST) down --remove-orphans; exit $$status
+
 quality-check: format-check lint typecheck test ## Exécute tous les contrôles hors build
 
 network: ## Crée le réseau externe utilisé par Traefik s'il est absent
@@ -73,6 +80,9 @@ logs: check-env ## Suit tous les journaux de développement
 check: check-env ## Vérifie le frontend et le proxy API locaux
 	@curl --fail --silent http://127.0.0.1:$(FRONTEND_PORT)/ >/dev/null
 	@curl --fail --silent http://127.0.0.1:$(FRONTEND_PORT)/api/health
+
+database-check: check-env ## Vérifie les comptages du jeu de données via Sequelize
+	@$(COMPOSE_DEV) exec backend npm run db:check
 
 frontend-logs: check-env ## Suit les journaux du frontend
 	@$(COMPOSE_DEV) logs -f frontend

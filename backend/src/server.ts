@@ -1,9 +1,11 @@
 import { createApplication } from './app.js';
 import { createDatabase } from './config/database.js';
 import { parseEnvironment } from './config/environment.js';
+import { initializeModels } from './models.js';
 
 const environment = parseEnvironment();
 const database = createDatabase(environment);
+initializeModels(database);
 const application = createApplication({
   checkDatabase: async () => database.authenticate(),
   isProduction: environment.NODE_ENV === 'production',

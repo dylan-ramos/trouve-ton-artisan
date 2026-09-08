@@ -1,6 +1,8 @@
 -- Trouve ton artisan — jeu d'essai fourni dans data.xlsx
 -- Les identifiants explicites rendent les relations lisibles et reproductibles.
 
+SET NAMES utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
 START TRANSACTION;
 
 INSERT INTO categories (id, name, slug, display_order) VALUES
