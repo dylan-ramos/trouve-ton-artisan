@@ -1,0 +1,16 @@
+.search-form {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  .form-control {
+    min-height: 3rem;
+  }
+  .btn {
+    display: inline-flex;
+    min-width: 3rem;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+}

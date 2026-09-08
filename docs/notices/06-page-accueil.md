@@ -33,6 +33,22 @@ La grille utilise une colonne sur mobile, deux sur tablette et trois sur ordinat
 
 Le composant `Seo` met à jour le titre du document et sa description lors de l'affichage de la page. Cette responsabilité est isolée afin que les pages suivantes puissent fournir leurs propres métadonnées sans manipuler directement le DOM.
 
+## Organisation des styles
+
+`main.scss` est uniquement le point d'entrée : il configure Bootstrap puis assemble des modules Sass répartis par responsabilité.
+
+```text
+styles/
+├── _tokens.scss
+├── base/_global.scss
+├── layout/_header.scss et _footer.scss
+├── components/_search-form.scss, _states.scss et _artisan-card.scss
+├── pages/_home.scss
+└── main.scss
+```
+
+Chaque module importe explicitement les tokens dont il dépend. Les styles d'un nouveau composant ou d'une nouvelle page pourront ainsi évoluer sans alourdir le point d'entrée ni mélanger les responsabilités.
+
 ## Commandes de vérification
 
 ```bash

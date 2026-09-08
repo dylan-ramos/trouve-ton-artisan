@@ -1,0 +1,38 @@
+@use '../tokens' as tokens;
+
+.site-footer {
+  padding-block: 2.5rem;
+  background: tokens.$color-primary-dark;
+  color: tokens.$color-surface;
+  a {
+    color: tokens.$color-surface;
+    text-underline-offset: 0.2em;
+  }
+  address {
+    margin-bottom: 0.5rem;
+  }
+}
+.site-footer__content {
+  display: grid;
+  gap: 2rem;
+}
+.site-footer__links {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  gap: 0.25rem;
+  list-style: none;
+  a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+  }
+}
+@media (min-width: 768px) {
+  .site-footer__content {
+    grid-template-columns: 1fr 1fr;
+  }
+  .site-footer__links {
+    justify-items: end;
+  }
+}

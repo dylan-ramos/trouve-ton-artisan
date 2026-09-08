@@ -1,0 +1,78 @@
+@use '../tokens' as tokens;
+
+.home-hero {
+  padding-block: clamp(3rem, 10vw, 7rem);
+  background:
+    radial-gradient(circle at 90% 15%, rgb(130 184 100 / 24%), transparent 32%),
+    linear-gradient(135deg, tokens.$color-primary-dark, #0068a9);
+  color: tokens.$color-surface;
+}
+.home-hero__content {
+  max-width: 50rem;
+  h1 {
+    max-width: 44rem;
+    font-weight: 750;
+  }
+  .search-form {
+    max-width: 40rem;
+    margin-top: 2rem;
+  }
+}
+.home-hero__eyebrow {
+  margin-bottom: 0.75rem;
+  color: #d9f1ff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.home-hero__lead {
+  max-width: 40rem;
+  margin-top: 1rem;
+  font-size: clamp(1.05rem, 3vw, 1.25rem);
+}
+.discovery-steps {
+  display: grid;
+  padding: 0;
+  margin: 2rem 0 0;
+  counter-reset: discovery-step;
+  gap: 1rem;
+  list-style: none;
+  li {
+    position: relative;
+    min-height: 5.5rem;
+    padding: 1.25rem 1.25rem 1.25rem 5rem;
+    border-radius: tokens.$border-radius-lg;
+    background: tokens.$color-surface;
+    box-shadow: tokens.$box-shadow;
+    counter-increment: discovery-step;
+    &::before {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      display: grid;
+      width: 3rem;
+      height: 3rem;
+      place-items: center;
+      border-radius: 50%;
+      background: tokens.$color-primary-dark;
+      color: tokens.$color-surface;
+      content: counter(discovery-step);
+      font-size: 1.25rem;
+      font-weight: 750;
+    }
+  }
+}
+.featured-section {
+  background: tokens.$color-surface;
+}
+@media (min-width: 768px) {
+  .discovery-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 992px) {
+  .discovery-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

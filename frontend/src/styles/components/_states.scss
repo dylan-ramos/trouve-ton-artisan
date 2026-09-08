@@ -1,0 +1,18 @@
+@use '../tokens' as tokens;
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1rem;
+  &--compact {
+    min-height: 3rem;
+  }
+}
+.empty-state {
+  padding: 1.5rem;
+  border: 1px dashed rgb(0 73 124 / 35%);
+  border-radius: tokens.$border-radius-lg;
+  background: tokens.$color-surface;
+  text-align: center;
+}
