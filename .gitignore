@@ -10,8 +10,11 @@ node_modules/
 frontend/dist/
 backend/dist/
 coverage/
+*.tsbuildinfo
 
 # Local framework configuration and secrets
+.env.local
+.env.*.local
 frontend/.env.local
 frontend/.env.*.local
 backend/.env.local

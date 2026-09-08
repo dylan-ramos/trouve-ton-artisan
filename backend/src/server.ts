@@ -1,0 +1,45 @@
+import { createApplication } from './app.js';
+import { createDatabase } from './config/database.js';
+import { parseEnvironment } from './config/environment.js';
+
+const environment = parseEnvironment();
+const database = createDatabase(environment);
+const application = createApplication({
+  checkDatabase: async () => database.authenticate(),
+  isProduction: environment.NODE_ENV === 'production',
+});
+
+const server = application.listen(environment.PORT, () => {
+  console.info(`API disponible sur le port ${String(environment.PORT)}.`);
+});
+
+let shuttingDown = false;
+function shutdown(signal: string): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.info(`${signal} reçu, arrêt en cours.`);
+
+  server.close(() => {
+    void database
+      .close()
+      .then(() => {
+        process.exitCode = 0;
+      })
+      .catch((error: unknown) => {
+        console.error('La fermeture de la base a échoué.', error);
+        process.exitCode = 1;
+      });
+  });
+
+  setTimeout(() => {
+    console.error("Délai maximal d'arrêt dépassé.");
+    process.exit(1);
+  }, 10_000).unref();
+}
+
+process.on('SIGTERM', () => {
+  shutdown('SIGTERM');
+});
+process.on('SIGINT', () => {
+  shutdown('SIGINT');
+});

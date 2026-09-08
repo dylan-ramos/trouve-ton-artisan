@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: trouve-ton-artisan-frontend:development
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-frontend:${APP_DEV_IMAGE_TAG:-development}
     build:
       target: development
     command: npm run dev -- --host 0.0.0.0
@@ -28,7 +28,7 @@ services:
       - traefik.enable=false
 
   backend:
-    image: trouve-ton-artisan-backend:development
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-backend:${APP_DEV_IMAGE_TAG:-development}
     build:
       target: development
     command: npm run dev

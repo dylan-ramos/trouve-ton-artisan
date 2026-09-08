@@ -1,13 +1,16 @@
-name: trouve-ton-artisan
+name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}
 
 services:
   frontend:
-    image: trouve-ton-artisan-frontend:production
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-frontend:${APP_PROD_IMAGE_TAG:-production}
     build:
       context: .
       dockerfile: .docker/frontend/Dockerfile
       target: production
       args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginxinc/nginx-unprivileged}
+        NGINX_VERSION: ${NGINX_VERSION:-1.29}
         VITE_API_URL: ${VITE_API_URL:-/api}
     depends_on:
       backend:
@@ -32,11 +35,13 @@ services:
     restart: unless-stopped
 
   backend:
-    image: trouve-ton-artisan-backend:production
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-backend:${APP_PROD_IMAGE_TAG:-production}
     build:
       context: .
       dockerfile: .docker/backend/Dockerfile
       target: production
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
     env_file:
       - path: ./backend/.env
         required: true
@@ -46,6 +51,10 @@ services:
       NODE_ENV: production
       PORT: 3000
       DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     depends_on:
       database:
         condition: service_healthy
@@ -65,12 +74,7 @@ services:
     restart: unless-stopped
 
   database:
-    image: mysql:8.4
-    env_file:
-      - path: ./backend/.env
-        required: true
-      - path: ./backend/.env.local
-        required: false
+    image: mysql:${MYSQL_VERSION:-8.4}
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}

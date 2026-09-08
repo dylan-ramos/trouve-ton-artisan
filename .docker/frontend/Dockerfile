@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-alpine AS development
+ARG NODE_VERSION=22
+ARG NGINX_IMAGE=nginxinc/nginx-unprivileged
+ARG NGINX_VERSION=1.29
+
+FROM node:${NODE_VERSION}-alpine AS development
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -13,7 +17,7 @@ ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
-FROM nginx:1.29-alpine AS production
+FROM ${NGINX_IMAGE}:${NGINX_VERSION}-alpine AS production
 COPY .docker/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080
