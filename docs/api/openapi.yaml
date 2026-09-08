@@ -1,0 +1,76 @@
+openapi: 3.1.0
+info:
+  title: Trouve ton artisan API
+  version: 0.4.0
+  description: API publique de consultation des artisans d'Auvergne-Rhône-Alpes.
+servers:
+  - url: /api
+paths:
+  /categories:
+    get:
+      summary: Liste les catégories et spécialités
+      responses:
+        '200':
+          description: Catégories ordonnées
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 1
+                    name: Bâtiment
+                    slug: batiment
+                    specialties: [{ id: 8, name: Plombier, slug: plombier }]
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /categories/{slug}/artisans:
+    get:
+      summary: Liste les artisans d'une catégorie
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Liste paginée }
+        '404': { description: Catégorie inconnue }
+        '422': { description: Paramètres invalides }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans:
+    get:
+      summary: Recherche et liste les artisans
+      parameters:
+        - { name: search, in: query, schema: { type: string, minLength: 1, maxLength: 100 } }
+        - { name: category, in: query, schema: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Liste paginée }
+        '422': { description: Paramètres invalides }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/featured:
+    get:
+      summary: Retourne les trois artisans du mois
+      responses:
+        '200': { description: Artisans mis en avant }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/{slug}:
+    get:
+      summary: Retourne la fiche publique d'un artisan
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200': { description: Fiche publique }
+        '404': { description: Artisan inconnu }
+        '422': { description: Slug invalide }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+components:
+  responses:
+    TooManyRequests:
+      description: Limite de 120 requêtes par minute dépassée
+      content:
+        application/json:
+          example:
+            error:
+              status: 429
+              message: Trop de requêtes. Veuillez réessayer dans un instant.
+  parameters:
+    Slug: { name: slug, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' } }
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    Limit: { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }

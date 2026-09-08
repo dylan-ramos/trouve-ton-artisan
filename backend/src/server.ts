@@ -2,13 +2,17 @@ import { createApplication } from './app.js';
 import { createDatabase } from './config/database.js';
 import { parseEnvironment } from './config/environment.js';
 import { initializeModels } from './models.js';
+import { ArtisanService } from './modules/artisans/artisan.service.js';
+import { CategoryService } from './modules/categories/category.service.js';
 
 const environment = parseEnvironment();
 const database = createDatabase(environment);
-initializeModels(database);
+const models = initializeModels(database);
 const application = createApplication({
   checkDatabase: async () => database.authenticate(),
   isProduction: environment.NODE_ENV === 'production',
+  artisanService: new ArtisanService(models),
+  categoryService: new CategoryService(models),
 });
 
 const server = application.listen(environment.PORT, () => {

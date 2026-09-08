@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 
 import type { Sequelize } from 'sequelize';
+import request from 'supertest';
+import { z } from 'zod';
 
+import { createApplication } from '../src/app.js';
 import { createDatabase } from '../src/config/database.js';
 import { parseEnvironment } from '../src/config/environment.js';
 import { initializeModels, type ApplicationModels } from '../src/models.js';
@@ -86,5 +89,71 @@ void describe('persistance Sequelize', { skip: !integrationEnabled }, () => {
       where: { slug: 'chocolaterie-labbe' },
     });
     assert.equal(artisan?.contactEmail, 'chocolaterie-labbe@gmail.com');
+  });
+
+  void test('expose les ressources publiques sans adresse de contact', async () => {
+    const application = createApplication({
+      checkDatabase: () => database.authenticate(),
+      isProduction: true,
+      artisanService: new ArtisanService(models),
+      categoryService: new CategoryService(models),
+    });
+    const categories = z
+      .object({ data: z.array(z.unknown()) })
+      .parse((await request(application).get('/categories').expect(200)).body);
+    assert.equal(categories.data.length, 4);
+
+    const featured = z
+      .object({ data: z.array(z.record(z.string(), z.unknown())) })
+      .parse(
+        (await request(application).get('/artisans/featured').expect(200)).body,
+      );
+    assert.equal(featured.data.length, 3);
+    assert.ok(featured.data.every((artisan) => !('contactEmail' in artisan)));
+
+    const listSchema = z.object({
+      data: z.array(z.object({ name: z.string() })),
+      meta: z.object({
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+      }),
+    });
+    const search = listSchema.parse(
+      (
+        await request(application)
+          .get('/artisans')
+          .query({ search: 'Labbé' })
+          .expect(200)
+      ).body,
+    );
+    assert.equal(search.data[0]?.name, 'Chocolaterie Labbé');
+    assert.deepEqual(search.meta, {
+      page: 1,
+      limit: 12,
+      total: 1,
+      totalPages: 1,
+    });
+
+    const empty = listSchema.parse(
+      (
+        await request(application)
+          .get('/artisans')
+          .query({ search: 'introuvable' })
+          .expect(200)
+      ).body,
+    );
+    assert.equal(empty.data.length, 0);
+    await request(application).get('/categories/inconnue/artisans').expect(404);
+    await request(application).get('/artisans/inconnu').expect(404);
+    await request(application)
+      .get('/artisans')
+      .query({ limit: 500 })
+      .expect(422);
+    await request(application)
+      .get('/artisans')
+      .query({ unexpected: 'value' })
+      .expect(422);
   });
 });

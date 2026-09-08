@@ -1,5 +1,10 @@
 import express, { type ErrorRequestHandler } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
+import { ApiError } from './http/api-error.js';
+import { createApiRouter } from './modules/api.routes.js';
+import type { ArtisanService } from './modules/artisans/artisan.service.js';
+import type { CategoryService } from './modules/categories/category.service.js';
 
 import {
   createHealthRouter,
@@ -9,11 +14,15 @@ import {
 export interface ApplicationDependencies {
   checkDatabase: DatabaseHealthCheck;
   isProduction: boolean;
+  artisanService?: ArtisanService;
+  categoryService?: CategoryService;
 }
 
 export function createApplication({
   checkDatabase,
   isProduction,
+  artisanService,
+  categoryService,
 }: ApplicationDependencies) {
   const application = express();
 
@@ -27,6 +36,23 @@ export function createApplication({
   application.use(express.urlencoded({ extended: false, limit: '32kb' }));
 
   application.use('/health', createHealthRouter(checkDatabase));
+  if (artisanService && categoryService) {
+    application.use(
+      rateLimit({
+        windowMs: 60_000,
+        limit: 120,
+        standardHeaders: 'draft-8',
+        legacyHeaders: false,
+        message: {
+          error: {
+            status: 429,
+            message: 'Trop de requêtes. Veuillez réessayer dans un instant.',
+          },
+        },
+      }),
+    );
+    application.use(createApiRouter(categoryService, artisanService));
+  }
 
   application.use((_request, response) => {
     response
@@ -40,6 +66,12 @@ export function createApplication({
     response,
     _next,
   ) => {
+    if (error instanceof ApiError) {
+      response
+        .status(error.status)
+        .json({ error: { status: error.status, message: error.message } });
+      return;
+    }
     if (!isProduction) {
       console.error(error);
     }
