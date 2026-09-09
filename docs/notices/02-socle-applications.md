@@ -24,14 +24,14 @@ Le compilateur ne remplace pas la validation des données externes : une requêt
 
 ## 3. Comprendre le backend Express
 
-Le point d'entrée `src/server.ts` se limite aux responsabilités système : lire l'environnement, créer Sequelize, démarrer HTTP et gérer l'arrêt. `src/app.ts` assemble les middlewares et routes. Cette séparation permet de tester l'application sans ouvrir un vrai port.
+Le point d'entrée `src/server.ts` se limite aux responsabilités système : lire l'environnement, créer Sequelize, démarrer HTTP et gérer l'arrêt. `src/app.ts` assemble les middlewares et routes. Cette séparation permet de tester l'application sans démarrer le serveur de production ; Supertest utilise un port éphémère local.
 
 La route de santé reçoit une fonction `checkDatabase`. En production, cette fonction appelle `database.authenticate()`. Dans les tests, elle est remplacée par une fonction contrôlée. Cette injection de dépendance réduit le couplage sans imposer un framework supplémentaire.
 
 Cycle d'une requête :
 
 ```text
-requête -> Helmet -> parseur JSON borné -> route -> contrôleur -> réponse
+requête -> Helmet -> quota -> parseur JSON borné -> route -> contrôleur -> réponse
                                       \-> 404 si aucune route ne correspond
 ```
 
@@ -94,7 +94,7 @@ Elles existent pendant l'exécution du conteneur. Compose injecte explicitement 
 
 Toute variable commençant par `VITE_` est intégrée au JavaScript livré au navigateur. Elle est publique et ne doit jamais contenir de mot de passe, clé SMTP ou secret API.
 
-Les ports internes restent fixes : Express écoute sur 3000, Vite sur 5173, Nginx sur 8080 et MySQL sur 3306. Ils forment le contrat privé entre services. Seuls les ports publiés sur l'hôte sont paramétrables.
+Les ports internes restent fixes : Express écoute sur 3000, Vite sur 5173, Nginx sur 8080 et MySQL sur 3306. Ils forment le contrat privé entre services. Seul le frontend est publié sur l’hôte en développement, via `FRONTEND_PORT`. Express et MySQL n’ont aucun port hôte ; les vérifications HTTP passent par `/api`.
 
 ## 7. Lancer l'environnement
 

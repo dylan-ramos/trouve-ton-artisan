@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 
 import { apiClient } from '../../services/api-client';
@@ -8,6 +8,7 @@ import { ErrorState } from '../ui/ErrorState';
 import { LoadingState } from '../ui/LoadingState';
 
 export function Header() {
+  const menuRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,16 +18,27 @@ export function Header() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let isCurrent = true;
     void apiClient
       .getCategories(controller.signal)
-      .then(setCategories)
+      .then((data) => {
+        if (isCurrent) setCategories(data);
+      })
       .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        if (
+          isCurrent &&
+          !(error instanceof Error && error.name === 'AbortError')
+        ) {
           setHasError(true);
         }
       })
-      .finally(() => setIsLoading(false));
-    return () => controller.abort();
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
+    return () => {
+      isCurrent = false;
+      controller.abort();
+    };
   }, [requestKey]);
 
   function retryCategories() {
@@ -36,7 +48,15 @@ export function Header() {
   }
 
   return (
-    <header className="site-header">
+    <header
+      className="site-header"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && isOpen) {
+          closeMenu();
+          menuRef.current?.focus();
+        }
+      }}
+    >
       <div className="container site-header__top">
         <Link
           className="site-logo"
@@ -51,9 +71,10 @@ export function Header() {
           />
         </Link>
         <div className="site-header__desktop-search">
-          <SearchForm compact />
+          <SearchForm compact label="Recherche dans le menu" />
         </div>
         <button
+          ref={menuRef}
           className="menu-toggle"
           type="button"
           aria-controls="main-navigation"
@@ -67,7 +88,10 @@ export function Header() {
       <div className={`site-header__panel${isOpen ? ' is-open' : ''}`}>
         <div className="container">
           <div className="site-header__mobile-search">
-            <SearchForm onSubmitted={closeMenu} />
+            <SearchForm
+              label="Recherche dans le menu"
+              onSubmitted={closeMenu}
+            />
           </div>
           <nav id="main-navigation" aria-label="Navigation principale">
             <ul className="main-navigation">

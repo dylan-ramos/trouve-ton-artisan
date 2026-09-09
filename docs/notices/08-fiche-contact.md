@@ -49,7 +49,7 @@ SMTP_PASSWORD=replace-with-smtp-password
 SMTP_FROM=no-reply@example.com
 ```
 
-Le port 465 utilise généralement `SMTP_SECURE=true`. Le port 587 utilise généralement `false` puis négocie STARTTLS. Les paramètres exacts dépendent du fournisseur.
+Le port 465 utilise généralement `SMTP_SECURE=true`. Le port 587 utilise généralement `false` puis négocie STARTTLS, obligatoire en production ; un serveur qui le refuse ne reçoit aucun message. Les paramètres exacts dépendent du fournisseur.
 
 Au démarrage des conteneurs de développement, `npm ci` resynchronise les volumes `node_modules` avec les lockfiles. Une nouvelle dépendance est ainsi disponible après `make up` sans supprimer le volume MySQL ni modifier les lockfiles.
 

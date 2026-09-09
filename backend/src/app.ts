@@ -30,13 +30,27 @@ export function createApplication({
   const application = express();
 
   if (isProduction) {
+    // Nginx overwrites forwarding headers; it is the sole public entry point.
     application.set('trust proxy', 1);
+  } else {
+    application.use((request, _response, next) => {
+      delete request.headers['x-forwarded-for'];
+      delete request.headers['x-forwarded-proto'];
+      delete request.headers.forwarded;
+      next();
+    });
   }
 
   application.disable('x-powered-by');
-  application.use(helmet());
-  application.use(express.json({ limit: '32kb' }));
-  application.use(express.urlencoded({ extended: false, limit: '32kb' }));
+  application.use(helmet({ strictTransportSecurity: false }));
+  application.use((_request, response, next) => {
+    response.setHeader('Cache-Control', 'no-store');
+    response.setHeader(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()',
+    );
+    next();
+  });
 
   application.use('/health', createHealthRouter(checkDatabase));
   if (artisanService && categoryService) {
@@ -54,6 +68,7 @@ export function createApplication({
         },
       }),
     );
+    application.use(express.json({ limit: '32kb', inflate: false }));
     application.use(
       createApiRouter(categoryService, artisanService, contactService),
     );
@@ -77,9 +92,25 @@ export function createApplication({
         .json({ error: { status: error.status, message: error.message } });
       return;
     }
-    if (!isProduction) {
-      console.error(error);
+    // Body-parser errors carry the raw body: never log or return that data.
+    const parserError = error as { type?: string } | null;
+    const parserErrors: Record<string, [number, string]> = {
+      'entity.parse.failed': [400, 'Corps JSON invalide.'],
+      'entity.too.large': [413, 'Corps de requête trop volumineux.'],
+      'encoding.unsupported': [415, 'Encodage de requête non pris en charge.'],
+      'charset.unsupported': [415, 'Encodage de requête non pris en charge.'],
+      'request.aborted': [400, 'Requête interrompue.'],
+      'request.size.invalid': [400, 'Taille de requête invalide.'],
+    };
+    const parserFailure = parserError?.type
+      ? parserErrors[parserError.type]
+      : undefined;
+    if (parserFailure) {
+      const [status, message] = parserFailure;
+      response.status(status).json({ error: { status, message } });
+      return;
     }
+    console.error('Une requête a échoué.', { status: 500 });
     response.status(500).json({
       error: { status: 500, message: 'Une erreur interne est survenue.' },
     });

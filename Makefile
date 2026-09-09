@@ -125,3 +125,44 @@ prod-ps: check-env ## Affiche l'état des services de production
 
 prod-logs: check-env ## Suit les journaux de production
 	@$(COMPOSE_PROD) logs -f
+
+# The audit stack has its own project and an ephemeral MySQL, with no mail delivery.
+COMPOSE_AUDIT := $(COMPOSE) --project-name $(COMPOSE_PROJECT_NAME)-audit -f compose.yaml -f compose.audit.yaml
+AUDIT_PORT ?= 5180
+AUDIT_BASE_URL ?= http://127.0.0.1:$(AUDIT_PORT)
+
+.PHONY: audit-config audit-up audit-down audit-security audit-browser audit-lighthouse
+
+audit-config: check-env ## Valide la recette isolée des images de production
+	@$(COMPOSE_AUDIT) config --quiet
+
+audit-up: audit-config ## Démarre la recette sans utiliser le volume de développement
+	@$(COMPOSE_AUDIT) up -d --build --wait --pull never
+
+audit-down: ## Arrête la recette éphémère sans supprimer de volume persistant
+	@$(COMPOSE_AUDIT) down --remove-orphans
+
+audit-security: ## Vérifie Nginx, le proxy, les quotas et l'isolation de la recette
+	@AUDIT_PROJECT_NAME=$(COMPOSE_PROJECT_NAME)-audit AUDIT_BASE_URL=$(AUDIT_BASE_URL) node scripts/security-audit.mjs
+
+audit-browser: ## Audite WCAG, clavier et responsive avec Chrome local
+	@AUDIT_BASE_URL=$(AUDIT_BASE_URL) npm --prefix frontend run test:a11y
+
+audit-lighthouse: ## Génère les rapports Lighthouse d'accessibilité
+	@AUDIT_BASE_URL=$(AUDIT_BASE_URL) npm --prefix frontend run audit:lighthouse
+
+.PHONY: audit-images
+
+audit-images: ## Analyse les images locales avec Trivy et conserve les rapports JSON
+	@AUDIT_PROJECT_NAME=$(COMPOSE_PROJECT_NAME)-audit MYSQL_VERSION=$(MYSQL_VERSION) APP_PROD_IMAGE_TAG=$(APP_PROD_IMAGE_TAG) sh scripts/audit-images.sh
+
+.PHONY: audit-reset
+
+audit-reset: ## Réinitialise uniquement les quotas du backend de recette
+	@$(COMPOSE_AUDIT) restart backend
+	@$(COMPOSE_AUDIT) up -d --wait --no-build
+
+.PHONY: audit-gosu
+
+audit-gosu: ## Vérifie les fonctions vulnérables réellement liées dans gosu
+	@AUDIT_PROJECT_NAME=$(COMPOSE_PROJECT_NAME)-audit sh scripts/audit-gosu.sh

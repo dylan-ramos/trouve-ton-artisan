@@ -101,11 +101,14 @@ describe('App', () => {
     if (!search) throw new Error('Champ de recherche introuvable.');
     fireEvent.change(search, { target: { value: '  Labbé & fils  ' } });
     fireEvent.submit(search.closest('form') as HTMLFormElement);
-    expect(
-      await screen.findByRole('heading', {
-        name: 'Résultats pour « Labbé & fils »',
-      }),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', {
+          name: 'Résultats pour « Labbé & fils »',
+        }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('main')).toHaveFocus();
   });
 
   test.each([

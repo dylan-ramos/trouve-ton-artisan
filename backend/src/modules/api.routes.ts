@@ -72,6 +72,10 @@ export function createApiRouter(
         },
       }),
       async (request, response) => {
+        if (request.get('Sec-Fetch-Site') === 'cross-site')
+          throw new ApiError(403, 'Requête non autorisée.');
+        if (!request.is('application/json'))
+          throw new ApiError(415, 'Le formulaire exige un corps JSON.');
         await contactService.send(
           parseSlug(request.params.slug),
           parseContact(request),

@@ -94,6 +94,10 @@ function ArtisanContent({ artisan }: { artisan: ArtisanDetail }) {
 
 export function ArtisanPage() {
   const { slug = '' } = useParams();
+  return <ArtisanRequest key={slug} slug={slug} />;
+}
+
+function ArtisanRequest({ slug }: { slug: string }) {
   const [artisan, setArtisan] = useState<ArtisanDetail>();
   const [hasError, setHasError] = useState(false);
   const [requestKey, setRequestKey] = useState(0);
@@ -134,6 +138,7 @@ export function ArtisanPage() {
             canonicalPath={`/artisan/${slug}`}
             noIndex
           />
+          <h1>Fiche artisan indisponible</h1>
           <ErrorState
             message="Cette fiche artisan ne peut pas être chargée."
             onRetry={retry}
@@ -149,6 +154,7 @@ export function ArtisanPage() {
             canonicalPath={`/artisan/${slug}`}
             noIndex
           />
+          <h1>Fiche artisan</h1>
           <LoadingState label="Chargement de la fiche artisan…" />
         </>
       )}

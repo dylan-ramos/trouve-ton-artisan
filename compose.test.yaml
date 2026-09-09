@@ -2,7 +2,11 @@ name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-test
 
 services:
   database-test:
-    image: mysql:${MYSQL_VERSION:-8.4}
+    build:
+      context: .
+      dockerfile: .docker/database/Dockerfile
+      args:
+        MYSQL_VERSION: ${MYSQL_VERSION:-8.4}
     environment:
       MYSQL_DATABASE: ${DB_TEST_NAME:-trouve_ton_artisan_test}
       MYSQL_USER: ${DB_USER}

@@ -20,7 +20,13 @@ ENV VITE_SITE_URL=${VITE_SITE_URL}
 RUN npm run build
 
 FROM ${NGINX_IMAGE}:${NGINX_VERSION}-alpine AS production
-COPY .docker/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+USER root
+RUN apk upgrade --no-cache
+USER 101
+ENV TRAEFIK_TRUSTED_IP=127.0.0.1
+ENV NGINX_ENVSUBST_FILTER=^TRAEFIK_TRUSTED_IP$
+COPY .docker/frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY .docker/frontend/security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 \

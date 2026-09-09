@@ -13,6 +13,12 @@ services:
         NGINX_VERSION: ${NGINX_VERSION:-1.29}
         VITE_API_URL: ${VITE_API_URL:-/api}
         VITE_SITE_URL: ${SITE_URL}
+    environment:
+      TRAEFIK_TRUSTED_IP: ${TRAEFIK_TRUSTED_IP:-127.0.0.1}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     depends_on:
       backend:
         condition: service_healthy
@@ -62,6 +68,11 @@ services:
     networks:
       - application
       - database
+      - egress
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test:
         - CMD
@@ -75,7 +86,14 @@ services:
     restart: unless-stopped
 
   database:
-    image: mysql:${MYSQL_VERSION:-8.4}
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-database:${APP_PROD_IMAGE_TAG:-production}
+    build:
+      context: .
+      dockerfile: .docker/database/Dockerfile
+      args:
+        MYSQL_VERSION: ${MYSQL_VERSION:-8.4}
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -102,5 +120,6 @@ networks:
     internal: true
   database:
     internal: true
+  egress:
   proxy:
     external: true

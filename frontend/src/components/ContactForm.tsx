@@ -1,4 +1,4 @@
-import { type ChangeEvent, type SubmitEvent, useState } from 'react';
+import { type ChangeEvent, type SubmitEvent, useRef, useState } from 'react';
 
 import { apiClient, ApiError } from '../services/api-client';
 import type { ContactPayload } from '../types/artisan';
@@ -27,6 +27,7 @@ function validate(values: ContactPayload): FieldErrors {
 }
 
 export function ContactForm({ artisanSlug }: { artisanSlug: string }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<
@@ -46,7 +47,14 @@ export function ContactForm({ artisanSlug }: { artisanSlug: string }) {
     if (status === 'sending') return;
     const nextErrors = validate(values);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
+    const firstInvalidField = Object.keys(nextErrors)[0];
+    if (firstInvalidField) {
+      setStatus('idle');
+      formRef.current
+        ?.querySelector<HTMLElement>(`[name="${firstInvalidField}"]`)
+        ?.focus();
+      return;
+    }
     setStatus('sending');
     setSubmitError('');
     try {
@@ -64,12 +72,15 @@ export function ContactForm({ artisanSlug }: { artisanSlug: string }) {
   }
 
   const field = (name: VisibleField) => ({
-    'aria-describedby': errors[name] ? `${name}-error` : `${name}-help`,
+    'aria-describedby': errors[name]
+      ? `${name}-help ${name}-error`
+      : `${name}-help`,
     'aria-invalid': Boolean(errors[name]),
   });
 
   return (
     <form
+      ref={formRef}
       className="contact-form"
       noValidate
       onSubmit={(event) => void submit(event)}
@@ -183,7 +194,13 @@ export function ContactForm({ artisanSlug }: { artisanSlug: string }) {
       >
         {status === 'sending' ? 'Envoi en cours…' : 'Envoyer le message'}
       </button>
-      <div className="contact-form__feedback" aria-live="polite">
+      <div
+        className="contact-form__feedback"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {status === 'sending' && <p>Envoi du message en cours…</p>}
         {status === 'success' && (
           <p className="alert alert-success mb-0">
             Votre message a bien été envoyé.

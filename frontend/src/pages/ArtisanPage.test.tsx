@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ArtisanPage } from './ArtisanPage';
@@ -61,6 +61,7 @@ describe('ArtisanPage', () => {
     renderPage();
     await screen.findByRole('heading', { level: 1, name: artisan.name });
     fireEvent.click(screen.getByRole('button', { name: 'Envoyer le message' }));
+    expect(screen.getByLabelText('Nom')).toHaveFocus();
     expect(screen.getByLabelText('Nom')).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -115,4 +116,41 @@ describe('ArtisanPage', () => {
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+});
+
+test('retire la fiche et le formulaire précédents dès que le slug change', async () => {
+  const second = { ...artisan, slug: 'autre-artisan', name: 'Autre artisan' };
+  let resolveSecond: ((response: Response) => void) | undefined;
+  const pending = new Promise<Response>((resolve) => {
+    resolveSecond = resolve;
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValueOnce(json(artisan)).mockReturnValueOnce(pending),
+  );
+  render(
+    <MemoryRouter initialEntries={['/artisan/chocolaterie-labbe']}>
+      <Link to="/artisan/autre-artisan">Autre fiche</Link>
+      <Routes>
+        <Route path="/artisan/:slug" element={<ArtisanPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  await screen.findByRole('heading', { name: artisan.name });
+  fireEvent.change(screen.getByLabelText('Message'), {
+    target: { value: 'Demande destinée au premier artisan' },
+  });
+  fireEvent.click(screen.getByRole('link', { name: 'Autre fiche' }));
+  expect(
+    screen.queryByRole('heading', { name: artisan.name }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: 'Envoyer le message' }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('heading', { level: 1, name: 'Fiche artisan' }),
+  ).toBeInTheDocument();
+  resolveSecond?.(json(second));
+  await screen.findByRole('heading', { name: second.name });
+  expect(screen.getByLabelText('Message')).toHaveValue('');
 });

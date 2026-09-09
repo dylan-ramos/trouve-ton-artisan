@@ -5,17 +5,19 @@ import { Rating } from './Rating';
 
 interface ArtisanCardProps {
   artisan: ArtisanSummary;
+  headingLevel?: 2 | 3;
 }
 
-export function ArtisanCard({ artisan }: ArtisanCardProps) {
+export function ArtisanCard({ artisan, headingLevel = 3 }: ArtisanCardProps) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   return (
     <article className="artisan-card">
       <div className="artisan-card__body">
-        <h3 className="h4">
+        <Heading className="h4">
           <Link className="artisan-card__link" to={`/artisan/${artisan.slug}`}>
             {artisan.name}
           </Link>
-        </h3>
+        </Heading>
         <Rating value={artisan.rating} />
         <dl className="artisan-card__details">
           <div>

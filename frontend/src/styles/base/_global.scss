@@ -18,7 +18,7 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  min-width: 320px;
+  overflow-wrap: anywhere;
   min-height: 100vh;
   margin: 0;
 }
@@ -28,7 +28,9 @@ img {
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 3px solid tokens.$color-primary;
   outline-offset: 3px;
 }
@@ -66,5 +68,20 @@ input:focus-visible {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
+}
+
+// A two-tone ring stays visible on both white and dark identity surfaces.
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-color: tokens.$color-primary-dark;
+  box-shadow: 0 0 0 3px tokens.$color-surface;
+}
+.form-control {
+  border-color: #6c757d;
 }

@@ -3,10 +3,15 @@ import { useNavigate } from 'react-router-dom';
 
 interface SearchFormProps {
   compact?: boolean;
+  label?: string;
   onSubmitted?: () => void;
 }
 
-export function SearchForm({ compact = false, onSubmitted }: SearchFormProps) {
+export function SearchForm({
+  compact = false,
+  label = 'Recherche principale',
+  onSubmitted,
+}: SearchFormProps) {
   const [search, setSearch] = useState('');
   const inputId = useId();
   const navigate = useNavigate();
@@ -23,6 +28,7 @@ export function SearchForm({ compact = false, onSubmitted }: SearchFormProps) {
     <form
       className={`search-form${compact ? ' search-form--compact' : ''}`}
       role="search"
+      aria-label={label}
       onSubmit={submit}
     >
       <label className="visually-hidden" htmlFor={inputId}>

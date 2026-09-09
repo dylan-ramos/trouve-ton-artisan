@@ -10,14 +10,19 @@ const query = z
   .object({
     search: z.string().trim().min(1).max(100).optional(),
     category: slug.optional(),
-    page: z.coerce.number().int().min(1).default(1),
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(12),
   })
   .strict();
 const singleLine = z
   .string()
-  .trim()
-  .refine((value) => !/[\r\n]/.test(value));
+  .refine((value) =>
+    Array.from(value).every((character) => {
+      const code = character.charCodeAt(0);
+      return code >= 32 && code !== 127;
+    }),
+  )
+  .trim();
 const contact = z
   .object({
     name: singleLine.min(2).max(100),

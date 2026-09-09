@@ -87,6 +87,7 @@ function CatalogResults({ request, onRetry }: CatalogResultsProps) {
           canonicalPath={canonicalPath}
           noIndex
         />
+        <h1>{title}</h1>
         <ErrorState
           message="Les artisans ne peuvent pas être chargés."
           onRetry={onRetry}
@@ -102,6 +103,7 @@ function CatalogResults({ request, onRetry }: CatalogResultsProps) {
           canonicalPath={canonicalPath}
           noIndex={request.mode === 'search'}
         />
+        <h1>{title}</h1>
         <LoadingState label="Chargement des artisans…" />
       </>
     );
@@ -121,13 +123,13 @@ function CatalogResults({ request, onRetry }: CatalogResultsProps) {
         {result.meta.total > 1 ? 'artisans trouvés' : 'artisan trouvé'}
       </p>
       {result.data.length === 0 ? (
-        <EmptyState title="Aucun artisan trouvé">
+        <EmptyState headingLevel={2} title="Aucun artisan trouvé">
           Modifiez votre recherche ou choisissez une autre catégorie.
         </EmptyState>
       ) : (
         <div className="artisan-grid">
           {result.data.map((artisan) => (
-            <ArtisanCard artisan={artisan} key={artisan.id} />
+            <ArtisanCard artisan={artisan} key={artisan.id} headingLevel={2} />
           ))}
         </div>
       )}
@@ -155,7 +157,7 @@ export function CatalogPage() {
         />
         <Breadcrumb current="Recherche" />
         <h1>Rechercher un artisan</h1>
-        <EmptyState title="Saisissez un nom">
+        <EmptyState headingLevel={2} title="Saisissez un nom">
           Utilisez le champ de recherche pour trouver un artisan.
         </EmptyState>
       </div>

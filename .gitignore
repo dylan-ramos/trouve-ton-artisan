@@ -28,3 +28,7 @@ backups/
 .DS_Store
 .idea/
 .vscode/
+
+**/audit-results/
+**/test-results/
+**/playwright-report/

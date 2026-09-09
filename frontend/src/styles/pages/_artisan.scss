@@ -4,6 +4,9 @@
   display: grid;
   margin-top: 1.5rem;
   gap: 2rem;
+  > * {
+    min-width: 0;
+  }
 }
 .artisan-profile__visual {
   overflow: hidden;
@@ -71,7 +74,7 @@
 }
 @media (min-width: 768px) {
   .artisan-profile {
-    grid-template-columns: minmax(16rem, 0.8fr) 1.2fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     align-items: center;
   }
   .artisan-profile__about,

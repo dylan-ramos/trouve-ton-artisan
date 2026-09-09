@@ -30,6 +30,12 @@ export function createMailTransport(environment: Environment): MailTransport {
     host: environment.SMTP_HOST,
     port: environment.SMTP_PORT,
     secure: environment.SMTP_SECURE,
+    requireTLS: environment.NODE_ENV === 'production',
+    disableFileAccess: true,
+    disableUrlAccess: true,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
     ...(environment.SMTP_USER && environment.SMTP_PASSWORD
       ? {
           auth: {

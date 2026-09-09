@@ -17,8 +17,12 @@ FROM node:${NODE_VERSION}-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN apk upgrade --no-cache \
+    && npm ci --omit=dev \
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --from=build --chown=node:node /app/dist ./dist
 USER node
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]

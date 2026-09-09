@@ -8,3 +8,7 @@
 coverage
 backups
 *.log
+
+**/audit-results/
+**/test-results/
+**/playwright-report/
