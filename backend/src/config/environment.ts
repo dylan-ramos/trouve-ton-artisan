@@ -21,6 +21,7 @@ const environmentSchema = z.object({
     .default(false),
   SMTP_USER: z.string().trim().min(1).optional(),
   SMTP_PASSWORD: z.string().min(1).optional(),
+  SMTP_TEST_RECIPIENT: z.email().optional(),
   SMTP_FROM: z.email().default('no-reply@trouve-ton-artisan.fr'),
 });
 

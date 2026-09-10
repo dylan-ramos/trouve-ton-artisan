@@ -90,7 +90,7 @@ void describe('persistance Sequelize', { skip: !integrationEnabled }, () => {
     const artisan = await models.Artisan.scope('withContactEmail').findOne({
       where: { slug: 'chocolaterie-labbe' },
     });
-    assert.equal(artisan?.contactEmail, 'chocolaterie-labbe@gmail.com');
+    assert.equal(artisan?.contactEmail, 'artisan-3@example.invalid');
   });
 
   void test('expose les ressources publiques sans adresse de contact', async () => {
@@ -239,9 +239,9 @@ void describe('persistance Sequelize', { skip: !integrationEnabled }, () => {
       .send(validContact)
       .expect(202);
     assert.deepEqual(success.body, { data: { message: 'Message envoyé.' } });
-    assert.doesNotMatch(success.text, /chocolaterie-labbe@gmail.com/);
+    assert.doesNotMatch(success.text, /artisan-3@example.invalid/);
     assert.equal(messages.length, 1);
-    assert.equal(messages[0]?.to, 'chocolaterie-labbe@gmail.com');
+    assert.equal(messages[0]?.to, 'artisan-3@example.invalid');
     assert.match(messages[0].html, /&lt;Dylan&gt;/);
     assert.doesNotMatch(messages[0].html, /<Dylan>/);
 

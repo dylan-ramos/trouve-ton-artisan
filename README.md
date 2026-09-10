@@ -117,9 +117,15 @@ SMTP_USER=replace-with-smtp-user
 SMTP_PASSWORD=replace-with-smtp-password
 # Adresse expéditrice autorisée par le fournisseur SMTP.
 SMTP_FROM=no-reply@example.com
+# Tous les contacts sont redirigés vers cette boîte contrôlée, à remplacer.
+SMTP_TEST_RECIPIENT=recette@example.com
 ```
 
 Remplacer `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` et `SMTP_FROM` par les valeurs du fournisseur ; l’adresse expéditrice doit être autorisée par celui-ci. Pour un service utilisant TLS dès la connexion, choisir `SMTP_PORT=465` et `SMTP_SECURE=true`. Si le serveur autorise explicitement l’envoi sans authentification, supprimer les deux lignes `SMTP_USER` et `SMTP_PASSWORD` au lieu de les laisser vides. Ne pas recopier les mots de passe MySQL dans ce fichier : Compose les injecte depuis le fichier racine.
+
+Pour tester la réception sans contacter les adresses du jeu de données, renseigner `SMTP_TEST_RECIPIENT` avec une boîte que vous contrôlez. Cette valeur remplace le destinataire SMTP de tous les formulaires, sans copie à l’artisan et sans modifier la base. `Reply-To` reste l’adresse saisie dans le formulaire. Si la variable est absente, les messages vont aux adresses des artisans : conserver la redirection pour une démonstration utilisant les données fournies.
+
+Après modification du fichier, `make prod-up` recrée le backend avec sa configuration. Pour la première installation de cette fonctionnalité, reconstruire les images avec `make prod-build` avant `make prod-up`. Envoyer un message avec un objet identifiable, puis vérifier sa présence dans la boîte de recette et les indésirables. Une réponse HTTP 202 indique que le traitement a été accepté ; elle ne prouve pas la livraison dans la boîte du destinataire.
 
 **Frontend : `frontend/.env.local`**
 
@@ -145,6 +151,16 @@ Le précontrôle refuse notamment les exemples MySQL, le serveur SMTP d’exempl
 [01-schema.sql](database/01-schema.sql) crée les tables ; [02-seed.sql](database/02-seed.sql) alimente les données. MySQL les exécute dans cet ordre à la première initialisation d’un volume vide. Une modification ultérieure des scripts ne réinitialise pas un volume existant. Le seed réappliqué met à jour les lignes fournies : le relire et sauvegarder avant toute réapplication sur des données modifiées. Aucun `sequelize.sync` ne remplace ces scripts.
 
 `make database-check` vérifie les comptages attendus via Sequelize. `make down` et `make clean` arrêtent les services et conservent le volume MySQL. Un changement de mot de passe dans `.env.local` ne change pas automatiquement le compte d’une base déjà initialisée.
+
+### Anonymisation des contacts
+
+Le seed utilise exclusivement des adresses `artisan-<id>@example.invalid`, sur un domaine réservé ([IANA](https://www.iana.org/assignments/special-use-domain-names)). Les autres données des artisans sont conservées. Pour une base déjà initialisée, appliquer une seule fois sur le VPS :
+
+```bash
+make prod-anonymize-emails
+```
+
+Cette commande remplace toutes les adresses de contact de la table `artisans`, sans supprimer de ligne ni de volume. Elle est réexécutable et affiche uniquement le nombre de contacts anonymisés. Un build ou un redémarrage seul ne met pas à jour une base existante. Les copies historiques et sauvegardes antérieures conservent leur contenu initial. Utiliser `SMTP_TEST_RECIPIENT` pour recevoir les formulaires dans une boîte contrôlée.
 
 ## Tests et recette
 

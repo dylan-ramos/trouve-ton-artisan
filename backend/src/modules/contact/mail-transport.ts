@@ -16,6 +16,16 @@ export interface MailTransport {
 }
 
 export function createMailTransport(environment: Environment): MailTransport {
+  const transport = createBaseTransport(environment);
+  const recipient = environment.SMTP_TEST_RECIPIENT;
+  return {
+    sendMail(message) {
+      return transport.sendMail({ ...message, to: recipient ?? message.to });
+    },
+  };
+}
+
+function createBaseTransport(environment: Environment): MailTransport {
   if (!environment.SMTP_HOST) {
     if (environment.NODE_ENV === 'production')
       throw new Error('SMTP_HOST est obligatoire en production.');

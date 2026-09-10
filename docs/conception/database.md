@@ -128,4 +128,6 @@ ARTISAN(
 
 ## Données fournies
 
+Les adresses de contact sont remplacées par `artisan-<id>@example.invalid` dans le seed. La migration `database/migrations/03-anonymize-contact-emails.sql` applique la même transformation aux bases existantes. Les autres attributs du jeu de données sont conservés.
+
 Le seed conserve les 17 lignes du tableur, y compris les graphies qui paraissent éventuellement fautives. Il ajoute seulement des identifiants et slugs techniques. Il contient 4 catégories, 15 spécialités et exactement 3 artisans marqués comme vedettes.

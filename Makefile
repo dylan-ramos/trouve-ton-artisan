@@ -217,3 +217,7 @@ audit-history: ## Recherche les secrets dans toutes les références Git locales
 
 audit-markup: ## Valide les DOM et CSS capturés avec Nu HTML Checker (VNU_BIN)
 	@sh scripts/audit-markup.sh
+
+.PHONY: prod-anonymize-emails
+prod-anonymize-emails: check-env ## Remplace toutes les adresses artisans de production par des adresses fictives
+	@$(COMPOSE_PROD) exec -T database sh -c 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql --user="$$MYSQL_USER" "$$MYSQL_DATABASE"' < database/migrations/03-anonymize-contact-emails.sql

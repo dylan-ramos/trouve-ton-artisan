@@ -74,3 +74,35 @@ void test('refuse de transmettre un message en production si STARTTLS est absent
     await once(server, 'close');
   }
 });
+
+void test('la recette remplace le destinataire et son enveloppe sans envoi réseau', async () => {
+  const message = {
+    from: 'sender@example.com',
+    to: 'artisan@example.com',
+    replyTo: 'visitor@example.com',
+    subject: 'Recette',
+    text: 'Message de recette',
+    html: '<p>Message de recette</p>',
+  };
+  for (const recipient of ['test-recipient@example.com', undefined]) {
+    const transport = createMailTransport(
+      parseEnvironment({
+        ...base,
+        ...(recipient ? { SMTP_TEST_RECIPIENT: recipient } : {}),
+      }),
+    );
+    const result = (await transport.sendMail(message)) as {
+      envelope: { to: string[] };
+      message: string;
+    };
+    const content = JSON.parse(result.message) as {
+      to: { address: string }[];
+      replyTo: { address: string }[];
+    };
+    assert.deepEqual(result.envelope.to, [recipient ?? message.to]);
+    assert.equal(content.to[0]?.address, recipient ?? message.to);
+    assert.equal(content.replyTo[0]?.address, message.replyTo);
+    if (recipient) assert.doesNotMatch(result.message, /artisan@example.com/);
+    assert.equal(message.to, 'artisan@example.com');
+  }
+});

@@ -35,6 +35,9 @@ void test('refuse les identifiants absents et les paramètres de démarrage inva
     { SMTP_PORT: 'abc' },
     { SMTP_SECURE: 'yes' },
     { SMTP_FROM: 'invalid' },
+    { SMTP_TEST_RECIPIENT: 'invalid' },
+    { SMTP_TEST_RECIPIENT: 'one@example.com,two@example.com' },
+    { SMTP_TEST_RECIPIENT: 'one@example.com\r\nBcc: two@example.com' },
     { NODE_ENV: 'unknown' },
   ])
     assert.throws(() => parseEnvironment({ ...valid, ...invalid }));
