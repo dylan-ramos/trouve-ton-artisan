@@ -1,5 +1,4 @@
-import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
 
@@ -27,8 +26,7 @@ export function productionIssues(config) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const args = ['compose', '--env-file', '.env', ...(existsSync('.env.local') ? ['--env-file', '.env.local'] : []), '-f', 'compose.yaml', 'config', '--format', 'json'];
-    const config = JSON.parse(execFileSync('docker', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+    const config = JSON.parse(readFileSync(0, 'utf8'));
     const issues = productionIssues(config);
     if (issues.length) { console.error(issues.join('\n')); process.exitCode = 1; }
     else console.log('Configuration de production prête pour la recette externe.');

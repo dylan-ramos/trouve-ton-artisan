@@ -194,7 +194,7 @@ restore-check: check-env ## Vérifie une sauvegarde dans MySQL éphémère (BACK
 .PHONY: prod-preflight operations-check release-evidence
 
 prod-preflight: check-env ## Refuse les valeurs de démonstration avant un démarrage public
-	@node scripts/production-preflight.mjs
+	@$(COMPOSE_PROD) config --format json | docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --user node --mount type=bind,src="$(CURDIR)/scripts/production-preflight.mjs",dst=/preflight.mjs,readonly node:$(NODE_VERSION)-alpine node /preflight.mjs
 
 operations-check: ## Vérifie les garde-fous de déploiement
 	@node --test scripts/production-preflight.test.mjs

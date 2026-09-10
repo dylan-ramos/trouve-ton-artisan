@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { productionIssues } from './production-preflight.mjs';
 const fixture = () => ({ services: {
@@ -21,4 +23,16 @@ test('refuse domaine incohérent, mot de passe root partagé et compte SMTP inco
   delete config.services.backend.environment.SMTP_PASSWORD;
   config.services.database.environment.MYSQL_ROOT_PASSWORD = config.services.database.environment.MYSQL_PASSWORD;
   assert.equal(productionIssues(config).length, 3);
+});
+
+test('le CLI lit la configuration sur stdin sans Docker et ne révèle pas les secrets', () => {
+  const run = input => spawnSync(process.execPath, [fileURLToPath(new URL('./production-preflight.mjs', import.meta.url))], { input, encoding: 'utf8' });
+  const valid = run(JSON.stringify(fixture()));
+  assert.equal(valid.status, 0);
+  assert.doesNotMatch(valid.stdout + valid.stderr, /fixture-app-password|fixture-root-password|local-fixture-password/);
+  for (const input of ['', '{invalid', '{}']) {
+    const invalid = run(input);
+    assert.equal(invalid.status, 1);
+    assert.match(invalid.stderr, /Impossible de vérifier/);
+  }
 });

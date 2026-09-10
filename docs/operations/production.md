@@ -8,6 +8,8 @@ Les paramètres Traefik sont tous surchargeables dans le `.env.local` à la raci
 
 Créer `.env.local`, `backend/.env.local` et `frontend/.env.local` selon les [trois configurations VPS du README](../../README.md#les-trois-fichiers-envlocal-pour-le-vps) : domaine, `SITE_URL`, adresse exacte de Traefik, deux mots de passe MySQL distincts et serveur SMTP. Le contrôle `make prod-preflight` refuse les principales valeurs de démonstration, les domaines incohérents, l’absence de proxy de confiance et les identifiants SMTP incomplets. Il ne teste ni DNS, ni certificat, ni accessibilité du serveur SMTP.
 
+Le précontrôle utilise un conteneur Node temporaire ; Node.js et npm ne sont pas nécessaires sur le VPS. Docker Compose fournit la configuration au conteneur par entrée standard, sans fichier intermédiaire ni affichage des secrets.
+
 ## Livrer
 
 Avant la bascule : valider la [checklist finale](../release/checklist.md), réaliser une [sauvegarde et sa vérification](backup-restore.md), relever le commit et les identifiants des images actuellement en service. Conserver ces images et la configuration précédente pour revenir à une version connue.

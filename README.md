@@ -17,7 +17,7 @@ Le code est réparti entre `frontend/src`, `backend/src`, `database` et `.docker
 ## Prérequis
 
 - Git, Docker Engine avec Compose prenant en charge `!override` et `!reset`, GNU Make et curl.
-- Node.js 22 ou supérieur avec npm pour les contrôles sur l’hôte. Les images utilisent Node 22.
+- Node.js 22 ou supérieur avec npm uniquement sur le poste de développement pour les contrôles locaux. Le VPS ne nécessite aucune installation de Node.js ou npm : le déploiement et son précontrôle utilisent Docker. Les images utilisent Node 22.
 - Accès aux registres npm et Docker lors de la première installation ; Docker doit être accessible à votre compte.
 - Chrome pour la recette Playwright configurée avec le canal `chrome`.
 
@@ -182,7 +182,7 @@ make prod-up
 make prod-ps
 ```
 
-Utiliser un hôte ou un nom de projet distinct du développement pour ne pas remplacer ses conteneurs. `make prod-deploy` regroupe validation, construction et démarrage. Une modification de `SITE_URL` exige un nouveau build. La redirection HTTP vers HTTPS relève de Traefik. Les sauvegardes, la restauration, les journaux et la recette SMTP réelle sont à organiser sur l’hébergement. `make prod-down` conserve la base.
+Utiliser un hôte ou un nom de projet distinct du développement pour ne pas remplacer ses conteneurs. `make prod-deploy` regroupe validation, construction et démarrage. `make prod-preflight` transmet la configuration Compose par entrée standard à un conteneur Node temporaire, sans accès réseau ni socket Docker ; les secrets ne sont pas affichés. L’image `node:22-alpine` est téléchargée si elle est absente. Une modification de `SITE_URL` exige un nouveau build. La redirection HTTP vers HTTPS relève de Traefik. Les sauvegardes, la restauration, les journaux et la recette SMTP réelle sont à organiser sur l’hébergement. `make prod-down` conserve la base.
 
 ## Dépannage
 
