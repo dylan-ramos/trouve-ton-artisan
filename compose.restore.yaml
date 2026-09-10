@@ -1,0 +1,22 @@
+# A restoration rehearsal never mounts the application volume or seed.
+services:
+  database-restore:
+    image: ${RESTORE_DATABASE_IMAGE:?Set the existing database image}
+    environment:
+      MYSQL_DATABASE: trouve_ton_artisan_restore_test
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - restore-database
+    healthcheck:
+      test: [CMD-SHELL, 'mysqladmin ping --host=127.0.0.1 --user=root --password="$${MYSQL_ROOT_PASSWORD}" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+networks:
+  restore-database:
+    internal: true

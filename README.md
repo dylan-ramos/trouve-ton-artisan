@@ -70,6 +70,76 @@ Les fichiers `.env.local` sont ignorés par Git et Docker. Ne jamais placer de s
 
 Sans `SMTP_HOST` en développement, Nodemailer produit un résultat JSON sans livrer d’e-mail ; une réponse 202 ne prouve donc pas une réception réelle. Pour la production, configurer dans `backend/.env.local` `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM` et, si le serveur l’exige, `SMTP_USER` et `SMTP_PASSWORD` ensemble. Le port 587 utilise habituellement `SMTP_SECURE=false` avec STARTTLS obligatoire en production ; le port 465 utilise `true`. Valider les valeurs auprès du fournisseur.
 
+### Les trois fichiers `.env.local` pour le VPS
+
+Créer les trois fichiers ci-dessous aux emplacements indiqués, avant `make prod-preflight`. Ils complètent les `.env` versionnés ; il est inutile de recopier les versions d’images et les paramètres inchangés. Ces exemples utilisent le domaine de publication et la configuration Traefik existante.
+
+**À la racine : `.env.local`**
+
+```dotenv
+# Configuration VPS ; les autres valeurs proviennent du .env versionné.
+COMPOSE_PROJECT_NAME=trouve-ton-artisan
+DB_NAME=trouve_ton_artisan
+DB_USER=artisan_app
+DB_PASSWORD=replace-with-a-secure-password
+DB_ROOT_PASSWORD=replace-with-another-secure-password
+
+TRAEFIK_NETWORK=proxy
+TRAEFIK_ENTRYPOINT=websecure
+TRAEFIK_CERT_RESOLVER=lehttp
+TRAEFIK_HOST=trouve-ton-artisan.srv924756.hstgr.cloud
+SITE_URL=https://trouve-ton-artisan.srv924756.hstgr.cloud
+# IP interne de Traefik sur TRAEFIK_NETWORK, sans suffixe CIDR.
+TRAEFIK_TRUSTED_IP=replace-with-traefik-internal-ip
+```
+
+Remplacer les deux mots de passe par des secrets longs et distincts. Pour les secrets MySQL lus aussi par Make, utiliser par exemple des valeurs aléatoires hexadécimales d’au moins 32 caractères afin d’éviter les caractères d’interpolation comme `$` et `#`.
+
+Pour trouver l’IP interne de Traefik sur le VPS :
+
+```bash
+docker network inspect proxy --format '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}'
+```
+
+Si `TRAEFIK_NETWORK` est différent, remplacer `proxy` dans cette commande. Reporter uniquement l’adresse du conteneur Traefik dans `TRAEFIK_TRUSTED_IP`, sans le suffixe `/…`, et conserver cette adresse stable dans la configuration réseau de Traefik. En cas de changement d’IP, mettre cette valeur à jour et recréer le frontend avec `make prod-up`.
+
+**Backend : `backend/.env.local`**
+
+```dotenv
+# Compose fournit NODE_ENV, PORT et DB_* depuis la configuration racine.
+LOG_LEVEL=info
+
+# Remplacer par les paramètres du fournisseur SMTP.
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=replace-with-smtp-user
+SMTP_PASSWORD=replace-with-smtp-password
+# Adresse expéditrice autorisée par le fournisseur SMTP.
+SMTP_FROM=no-reply@example.com
+```
+
+Remplacer `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` et `SMTP_FROM` par les valeurs du fournisseur ; l’adresse expéditrice doit être autorisée par celui-ci. Pour un service utilisant TLS dès la connexion, choisir `SMTP_PORT=465` et `SMTP_SECURE=true`. Si le serveur autorise explicitement l’envoi sans authentification, supprimer les deux lignes `SMTP_USER` et `SMTP_PASSWORD` au lieu de les laisser vides. Ne pas recopier les mots de passe MySQL dans ce fichier : Compose les injecte depuis le fichier racine.
+
+**Frontend : `frontend/.env.local`**
+
+```dotenv
+# Configuration publique uniquement : aucun secret dans VITE_*.
+VITE_SITE_URL=https://trouve-ton-artisan.srv924756.hstgr.cloud
+```
+
+Ce fichier est requis par les commandes Make et sert aux outils Vite exécutés directement. Pour le build Docker de production, c’est `SITE_URL` du fichier racine qui fournit cette URL ; garder les deux valeurs identiques. Aucun hôte backend n’est à renseigner : le navigateur appelle `/api` sur le domaine du site.
+
+Une fois les valeurs remplacées, protéger les fichiers et contrôler la configuration :
+
+```bash
+chmod 600 .env.local backend/.env.local frontend/.env.local
+make prod-config
+make prod-preflight
+```
+
+Le précontrôle refuse notamment les exemples MySQL, le serveur SMTP d’exemple et l’IP Traefik non renseignée. Il ne garantit pas la validité des identifiants SMTP : un envoi réel doit être vérifié après déploiement. Utiliser ensuite les commandes de la section [Production](#production).
+
 ## Base et seed
 
 [01-schema.sql](database/01-schema.sql) crée les tables ; [02-seed.sql](database/02-seed.sql) alimente les données. MySQL les exécute dans cet ordre à la première initialisation d’un volume vide. Une modification ultérieure des scripts ne réinitialise pas un volume existant. Le seed réappliqué met à jour les lignes fournies : le relire et sauvegarder avant toute réapplication sur des données modifiées. Aucun `sequelize.sync` ne remplace ces scripts.
@@ -102,10 +172,11 @@ La recette écoute par défaut sur `http://127.0.0.1:5180`, utilise un projet `-
 
 ## Production
 
-Préparer sur l’hôte cible un Traefik actif avec réseau externe `proxy`, entrypoint `websecure`, certificat valide et résolveur correspondant à `TRAEFIK_CERT_RESOLVER`. Régler `TRAEFIK_HOST`, `SITE_URL` et l’adresse exacte de Traefik sur `proxy` dans `TRAEFIK_TRUSTED_IP`. Configurer SMTP avant le démarrage : le backend refuse une production sans serveur SMTP.
+Préparer sur l’hôte cible un Traefik actif avec réseau externe `TRAEFIK_NETWORK` (`proxy` par défaut), entrypoint `TRAEFIK_ENTRYPOINT` (`websecure` par défaut), certificat valide et résolveur `TRAEFIK_CERT_RESOLVER` (`lehttp` par défaut). Ces paramètres sont surchargeables dans le `.env.local` à la racine, chargé après `.env` par les commandes Make. Régler `TRAEFIK_HOST`, `SITE_URL` et l’adresse exacte de Traefik sur le réseau choisi dans `TRAEFIK_TRUSTED_IP`. Configurer SMTP avant le démarrage : le backend refuse une production sans serveur SMTP.
 
 ```bash
 make prod-config
+make prod-preflight
 make prod-build
 make prod-up
 make prod-ps
@@ -133,4 +204,20 @@ Utiliser un hôte ou un nom de projet distinct du développement pour ne pas rem
 - [Dossier du projet](docs/dossier/projet.md), [veille datée](docs/security/veille.md) et [licences](docs/licenses.md).
 - [Sources Mermaid et exports](docs/conception/diagrams/README.md) et [spécification visuelle](docs/design/specification.md).
 
-La recette humaine d’accessibilité, les validations HTML/CSS et le déploiement public restent à compléter. Les pages légales sont provisoires. Les liens Figma et de production seront renseignés dans le dossier après publication.
+Maquettes : [Figma](https://www.figma.com/design/kpnXYMfChXTyp13cdCs2L6/trouve-ton-artisan?node-id=0-1). Adresse de publication : [Trouve ton artisan](https://trouve-ton-artisan.srv924756.hstgr.cloud). Les résultats des validations HTML/CSS sont détaillés dans le rapport de recette.
+
+
+## Exploitation et version candidate
+
+La [procédure de production](docs/operations/production.md) détaille les précontrôles, l’arrêt et le retour arrière. La [sauvegarde chiffrée et sa restauration de contrôle](docs/operations/backup-restore.md) utilisent GnuPG sur l’hôte et une base temporaire sans accès à la base active.
+
+La [note de release](docs/release/release-notes.md) décrit les changements ; le [rapport final](docs/release/audit-final.md) présente les résultats de recette et leur périmètre. La [liste des contrôles de livraison](docs/release/checklist.md) complète les procédures d’exploitation. Le [dossier PDF](docs/dossier/projet-recette.pdf) rassemble la présentation du projet, les diagrammes, les liens et les captures de l’application.
+
+Pour reproduire les captures et le PDF avec Chrome, démarrer la pile de recette, puis :
+
+```bash
+make release-evidence
+make dossier-pdf
+```
+
+Les captures sont dans `docs/dossier/captures`, les DOM/CSS de validation dans `frontend/audit-results/release`. Ces commandes ne livrent aucun e-mail et ne déploient pas de site public.

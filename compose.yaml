@@ -1,7 +1,15 @@
 name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}
 
+x-logging: &bounded-logs
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   frontend:
+    logging: *bounded-logs
+    stop_grace_period: 15s
     image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-frontend:${APP_PROD_IMAGE_TAG:-production}
     build:
       context: .
@@ -27,9 +35,9 @@ services:
       - proxy
     labels:
       - traefik.enable=true
-      - traefik.docker.network=proxy
+      - traefik.docker.network=${TRAEFIK_NETWORK:-proxy}
       - traefik.http.routers.trouve-ton-artisan.rule=Host(`${TRAEFIK_HOST}`)
-      - traefik.http.routers.trouve-ton-artisan.entrypoints=websecure
+      - traefik.http.routers.trouve-ton-artisan.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
       - traefik.http.routers.trouve-ton-artisan.tls=true
       - traefik.http.routers.trouve-ton-artisan.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
       - traefik.http.services.trouve-ton-artisan.loadbalancer.server.port=8080
@@ -42,6 +50,8 @@ services:
     restart: unless-stopped
 
   backend:
+    logging: *bounded-logs
+    stop_grace_period: 20s
     image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-backend:${APP_PROD_IMAGE_TAG:-production}
     build:
       context: .
@@ -86,6 +96,8 @@ services:
     restart: unless-stopped
 
   database:
+    logging: *bounded-logs
+    stop_grace_period: 60s
     image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-database:${APP_PROD_IMAGE_TAG:-production}
     build:
       context: .
@@ -122,4 +134,5 @@ networks:
     internal: true
   egress:
   proxy:
+    name: ${TRAEFIK_NETWORK:-proxy}
     external: true

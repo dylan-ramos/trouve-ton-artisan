@@ -19,3 +19,8 @@ Les nouveaux tests ne modifient pas les données métier. Les tests d’intégra
 ## Limites
 
 Les tests composants simulent HTTP ; les tests MySQL vérifient la requête réelle. Ces deux niveaux se complètent. La recette humaine lecteur d’écran, zoom natif, navigateurs supplémentaires, SMTP et Traefik réels reste décrite dans la [procédure d’acceptation](acceptance.md). Le rapport du [9 septembre](../security/audit-2026-09-09.md) conserve ses résultats datés ; il ne représente pas une nouvelle exécution.
+
+
+## Préparation de production
+
+Les trois tests de `scripts/production-preflight.test.mjs` couvrent les valeurs de démonstration, la cohérence du domaine et les identifiants incomplets. La sauvegarde est validée par une vraie restauration MySQL à dump identique, avec cas d’archive corrompue et de fichier déjà existant. Les tests du composant de note vérifient aussi son rôle accessible après le diagnostic HTML. Voir le [rapport final](../release/audit-final.md).

@@ -45,6 +45,9 @@ export default defineConfig(({ mode }) => {
       react(),
       staticSeoFiles(environment.VITE_SITE_URL ?? 'http://localhost:5173'),
     ],
+    // Preserve Sass selectors: Lightning CSS emits a legacy :-webkit-any()
+    // selector with combinators that the HTML/CSS checker rejects.
+    build: { cssMinify: false },
     server: {
       port: 5173,
       strictPort: true,

@@ -1,6 +1,6 @@
 # Trouve ton artisan — Dossier du projet
 
-Auteur : Dylan Ramos. Version documentaire : 10 septembre 2026. Statut : application développée, recette finale et publication à compléter.
+Auteur : Dylan Ramos. Version documentaire : 10 septembre 2026.
 
 ## Sommaire
 
@@ -9,6 +9,7 @@ Auteur : Dylan Ramos. Version documentaire : 10 septembre 2026. Statut : applica
 3. Données et API
 4. Sécurité et validation
 5. Liens et pièces de livraison
+6. Préparation opérationnelle
 
 ## 1. Contexte et besoins
 
@@ -22,7 +23,7 @@ React, Bootstrap et Sass portent une interface mobile first ; Node.js, Express, 
 
 La [spécification visuelle](../design/specification.md) décrit les écrans ; le [registre des actifs](../design/assets.md) décrit logo, favicons et Montserrat auto-hébergée. Les images individuelles absentes du jeu source sont remplacées par un monogramme, sans inventer de portrait.
 
-À insérer après validation : captures accueil, catalogue, fiche/contact, pages transverses et 404 aux formats mobile, tablette et ordinateur ; inclure les états d’erreur et le formulaire invalide. Le lien Figma reste à renseigner.
+Les captures de recette du 10 septembre sont disponibles dans [captures](captures/README.md) : accueil, catalogue, fiche, page légale, 404 et formulaire invalide, à 375, 768 et 1440 pixels. Elles sont intégrées au PDF de recette. Les [maquettes Figma](https://www.figma.com/design/kpnXYMfChXTyp13cdCs2L6/trouve-ton-artisan?node-id=0-1) présentent la conception des interfaces.
 
 ## 3. Données et API
 
@@ -34,21 +35,36 @@ Le [MCD/MLD détaillé](../conception/database.md) et les [sources Mermaid et ex
 
 Les entrées sont normalisées et bornées avec Zod ; Sequelize paramètre les requêtes. Les quotas limitent les abus et le contact combine contrôle de format, honeypot, refus d’injection d’en-têtes et échappement du message HTML. SMTP exige TLS en production. Les secrets restent dans la configuration locale ; les variables du navigateur sont publiques.
 
-En production, Traefik termine HTTPS, Nginx sert l’application et relaie `/api`, Express et MySQL restent privés. L’adresse du proxy de confiance est explicitement configurée. Les limites connues comprennent les quotas en mémoire, les essais humains d’accessibilité restants et la recette d’hébergement à réaliser.
+En production, Traefik termine HTTPS, Nginx sert l’application et relaie `/api`, Express et MySQL restent privés. L’adresse du proxy de confiance est explicitement configurée. Les quotas sont conservés en mémoire et s’appliquent à une instance du backend.
 
 La [matrice de couverture](../validation/coverage.md) relie risques et tests. La [procédure d’acceptation](../validation/acceptance.md), le [rapport d’audit](../security/audit-2026-09-09.md) et la [veille sourcée](../security/veille.md) documentent preuves et limites. Aucun score automatisé n’est assimilé à une conformité WCAG complète.
 
+### Veille et vulnérabilités étudiées
+
+La veille documentaire du 10 septembre s’appuie sur les recommandations de sécurité d’[Express](https://expressjs.com/en/advanced/best-practice-security/), la documentation de [npm audit](https://docs.npmjs.com/cli/v11/commands/npm-audit/) et la référence [WCAG 2.1 du W3C](https://www.w3.org/WAI/WCAG21/quickref/). Elle relie validation des entrées, transport TLS, suivi des dépendances et critères d’accessibilité aux contrôles du projet.
+
+Le cas principal étudié concerne gosu, utilisé au démarrage de MySQL pour changer d’utilisateur. Trivy signale 46 alertes brutes liées à sa bibliothèque Go, dont 22 hautes/critiques. L’analyse du binaire exact par govulncheck ne trouve aucun symbole vulnérable appelé. Une exception ciblée conserve les identifiants, l’empreinte et une échéance au 9 octobre 2026 ; elle doit être réexaminée si le binaire ou les alertes changent. La [politique de sécurité de gosu](https://github.com/tianon/gosu/blob/1.19/SECURITY.md) explique cette distinction entre version signalée et fonctions utilisées. Les images frontend/backend et les deux arbres npm ne présentent aucune alerte lors du contrôle du 10 septembre.
+
+La recette a également trouvé et corrigé un libellé ARIA sans rôle adapté sur les notes, ainsi qu’un sélecteur invalide généré par la minification CSS. Après correction, les 11 DOM et le CSS servis passent Nu HTML Checker sans diagnostic ; 45 tests navigateur réussissent et Lighthouse atteint 100/100 en accessibilité sur cinq pages. Les résultats restent limités aux versions et aux parcours testés et ne remplacent pas les essais humains.
+
 ## 5. Liens et pièces de livraison
 
-| Pièce | État / emplacement |
+| Pièce | Emplacement |
 | --- | --- |
-| Dépôt | [dylan-ramos/trouve-ton-artisan](https://github.com/dylan-ramos/trouve-ton-artisan) ; accessibilité publique à vérifier lors de la livraison |
+| Dépôt | [dylan-ramos/trouve-ton-artisan](https://github.com/dylan-ramos/trouve-ton-artisan) |
 | Installation et exploitation | [README](../../README.md) |
-| Maquettes Figma | À renseigner après partage |
-| Site HTTPS | À renseigner après déploiement et recette |
-| Captures | À insérer avec légende, format et date |
+| Maquettes Figma | [Maquettes](https://www.figma.com/design/kpnXYMfChXTyp13cdCs2L6/trouve-ton-artisan?node-id=0-1) |
+| Site HTTPS | [Adresse de publication](https://trouve-ton-artisan.srv924756.hstgr.cloud) |
+| Captures | [18 captures datées](captures/README.md), intégrées au PDF de recette |
 | Schéma et seed | [Création](../../database/01-schema.sql), [alimentation](../../database/02-seed.sql) |
 | Licences | [Inventaire](../licenses.md) |
-| Procès-verbal de recette | À compléter selon la procédure d’acceptation |
+| Procès-verbal de recette | [Rapport local](../release/audit-final.md) |
 
-Pour le PDF final, reprendre ce contenu dans un document paginé avec couverture, sommaire, en-tête « Trouve ton artisan », pied de page avec version et pagination. Insérer les diagrammes SVG et les captures, renseigner les liens manquants puis contrôler lisibilité, sélection du texte et liens après export. Ce fichier constitue le contenu éditable ; le PDF final attend les pièces de publication.
+Le dossier PDF est généré depuis ce document avec `make dossier-pdf`. Il comprend une couverture, un sommaire, les diagrammes et les captures de l’application, avec une pagination et des liens cliquables.
+
+
+## 6. Préparation opérationnelle
+
+La sauvegarde est compressée puis chiffrée par GPG sans SQL temporaire sur disque. La restauration de contrôle utilise une base vide en tmpfs et compare le dump obtenu à la source. Les journaux Docker sont bornés et les services disposent de délais d’arrêt adaptés. Un précontrôle refuse les principales valeurs de démonstration avant mise en service.
+
+Le [guide de production](../operations/production.md) décrit la configuration, le déploiement et le retour arrière. Le [rapport de recette](../release/audit-final.md) présente les contrôles exécutés et leur périmètre ; la [procédure de livraison](../release/checklist.md) décrit les contrôles applicables à chaque publication.

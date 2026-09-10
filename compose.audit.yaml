@@ -26,4 +26,5 @@ services:
 networks:
   audit-access:
   proxy:
+    name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-audit-proxy
     external: false

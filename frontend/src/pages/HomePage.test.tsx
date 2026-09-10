@@ -64,7 +64,9 @@ describe('HomePage', () => {
       screen.getByText('Une réponse sera apportée sous 48h.'),
     ).toBeInTheDocument();
     expect(await screen.findAllByRole('article')).toHaveLength(3);
-    expect(screen.getAllByLabelText('Note : 4,8 sur 5')).toHaveLength(3);
+    expect(
+      screen.getAllByRole('img', { name: 'Note : 4,8 sur 5' }),
+    ).toHaveLength(3);
   });
 
   test('annonce le chargement', () => {

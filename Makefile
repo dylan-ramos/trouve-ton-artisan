@@ -52,10 +52,10 @@ test-config: check-env ## Valide la configuration des tests d'intégration
 integration-test: test-config ## Exécute les tests backend avec une base MySQL éphémère
 	@status=0; $(COMPOSE_TEST) up --build --abort-on-container-exit --exit-code-from backend-test || status=$$?; $(COMPOSE_TEST) down --remove-orphans; exit $$status
 
-quality-check: format-check lint typecheck test ## Exécute tous les contrôles hors build
+quality-check: format-check lint typecheck test operations-check ## Exécute tous les contrôles hors build
 
 network: ## Crée le réseau externe utilisé par Traefik s'il est absent
-	@docker network inspect proxy >/dev/null 2>&1 || docker network create proxy
+	@docker network inspect "$(TRAEFIK_NETWORK)" >/dev/null 2>&1 || docker network create "$(TRAEFIK_NETWORK)"
 
 config: check-env ## Valide la configuration de développement
 	@$(COMPOSE_DEV) config --quiet
@@ -110,10 +110,13 @@ prod-config: check-env ## Valide la configuration de production
 prod-build: check-env ## Construit les images de production
 	@$(COMPOSE_PROD) build
 
-prod-up: check-env network ## Démarre la production derrière Traefik
+prod-up: check-env prod-preflight network ## Démarre la production derrière Traefik
 	@$(COMPOSE_PROD) up -d --wait
 
-prod-deploy: prod-config prod-build prod-up ## Valide, construit et démarre la production
+prod-deploy: ## Valide, construit et démarre la production séquentiellement
+	@$(MAKE) prod-config prod-preflight
+	@$(MAKE) prod-build
+	@$(MAKE) prod-up
 
 prod-down: check-env ## Arrête la production sans supprimer les données
 	@$(COMPOSE_PROD) down --remove-orphans
@@ -176,3 +179,41 @@ app-build: ## Compile les deux applications avec leurs lockfiles installés
 verify: ## Exécute séquentiellement qualité et compilation des deux applications
 	@$(MAKE) quality-check
 	@$(MAKE) app-build
+
+.PHONY: backup restore-check
+BACKUP_MODE ?= production
+
+backup: check-env ## Sauvegarde MySQL chiffrée (BACKUP_FILE, BACKUP_RECIPIENT)
+	@test -n "$(BACKUP_FILE)" || (echo "Définir BACKUP_FILE." && exit 1)
+	@node scripts/database-backup.mjs backup "$(BACKUP_FILE)" "$(BACKUP_MODE)"
+
+restore-check: check-env ## Vérifie une sauvegarde dans MySQL éphémère (BACKUP_FILE)
+	@test -n "$(BACKUP_FILE)" || (echo "Définir BACKUP_FILE." && exit 1)
+	@node scripts/database-backup.mjs restore-check "$(BACKUP_FILE)"
+
+.PHONY: prod-preflight operations-check release-evidence
+
+prod-preflight: check-env ## Refuse les valeurs de démonstration avant un démarrage public
+	@node scripts/production-preflight.mjs
+
+operations-check: ## Vérifie les garde-fous de déploiement
+	@node --test scripts/production-preflight.test.mjs
+	@node --check scripts/database-backup.mjs
+
+release-evidence: ## Produit captures et DOM sur la pile de recette active
+	@cd frontend && AUDIT_BASE_URL=$(AUDIT_BASE_URL) node scripts/release-evidence.mjs
+
+.PHONY: dossier-pdf
+
+dossier-pdf: ## Exporte le dossier PDF depuis les documents et captures existants
+	@cd frontend && node scripts/export-dossier.mjs
+
+.PHONY: audit-history
+
+audit-history: ## Recherche les secrets dans toutes les références Git locales
+	@sh scripts/audit-history.sh
+
+.PHONY: audit-markup
+
+audit-markup: ## Valide les DOM et CSS capturés avec Nu HTML Checker (VNU_BIN)
+	@sh scripts/audit-markup.sh

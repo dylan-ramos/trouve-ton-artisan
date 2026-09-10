@@ -63,3 +63,8 @@ Les empreintes des actifs figurent dans le [registre graphique](design/assets.md
 | backend | typescript-eslint | 8.70.0 | MIT | Développement / tests |
 
 Les images Node/Alpine, Nginx et MySQL comprennent des composants tiers supplémentaires. Conserver leurs notices lors de la redistribution ; l’inventaire npm ne constitue pas un inventaire des licences système.
+
+
+## Outils opérationnels et de recette
+
+GnuPG (GPL) est requis sur l’hôte pour les sauvegardes ; il n’est pas incorporé aux images applicatives. Nu HTML Checker et Gitleaks sont utilisés localement pour les contrôles de livraison ; leurs binaires ne sont pas redistribués dans le dépôt. Chrome/Playwright sert à produire les captures et le PDF. Ces outils ne modifient pas la licence des actifs du projet.

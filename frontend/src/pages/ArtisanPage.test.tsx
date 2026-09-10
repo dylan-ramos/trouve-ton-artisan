@@ -48,7 +48,9 @@ describe('ArtisanPage', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: artisan.name }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Note : 4,9 sur 5')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Note : 4,9 sur 5' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(artisan.about)).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Visiter le site internet/ }),
