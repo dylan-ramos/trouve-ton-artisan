@@ -166,3 +166,13 @@ audit-reset: ## Réinitialise uniquement les quotas du backend de recette
 
 audit-gosu: ## Vérifie les fonctions vulnérables réellement liées dans gosu
 	@AUDIT_PROJECT_NAME=$(COMPOSE_PROJECT_NAME)-audit sh scripts/audit-gosu.sh
+
+.PHONY: app-build verify
+
+app-build: ## Compile les deux applications avec leurs lockfiles installés
+	@npm --prefix backend run build
+	@npm --prefix frontend run build
+
+verify: ## Exécute séquentiellement qualité et compilation des deux applications
+	@$(MAKE) quality-check
+	@$(MAKE) app-build

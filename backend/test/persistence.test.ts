@@ -159,6 +159,55 @@ void describe('persistance Sequelize', { skip: !integrationEnabled }, () => {
       .expect(422);
   });
 
+  void test('recherche sans accents et traite les caractères LIKE comme du texte', async () => {
+    const service = new ArtisanService(models);
+    const result = await service.search({
+      search: 'labbe',
+      page: 1,
+      limit: 12,
+    });
+    assert.equal(result.data[0]?.name, 'Chocolaterie Labbé');
+    for (const search of ['%', '_', "' OR 1=1 --"]) {
+      const empty = await service.search({ search, page: 1, limit: 12 });
+      assert.equal(empty.meta.total, 0);
+      assert.deepEqual(empty.data, []);
+    }
+  });
+
+  void test('pagine sans doublon et combine catégorie et recherche', async () => {
+    const service = new ArtisanService(models);
+    const first = await service.search({ page: 1, limit: 12 });
+    const second = await service.search({ page: 2, limit: 12 });
+    assert.equal(first.data.length, 12);
+    assert.equal(second.data.length, 5);
+    assert.equal(
+      new Set([...first.data, ...second.data].map(({ id }) => id)).size,
+      17,
+    );
+    assert.deepEqual(second.meta, {
+      page: 2,
+      limit: 12,
+      total: 17,
+      totalPages: 2,
+    });
+    const beyond = await service.search({ page: 3, limit: 12 });
+    assert.deepEqual(beyond.data, []);
+    const filtered = await service.search({
+      category: 'alimentation',
+      search: 'labbe',
+      page: 1,
+      limit: 12,
+    });
+    assert.equal(filtered.meta.total, 1);
+    const excluded = await service.search({
+      category: 'batiment',
+      search: 'labbe',
+      page: 1,
+      limit: 12,
+    });
+    assert.equal(excluded.meta.total, 0);
+  });
+
   void test('transmet un contact sûr sans révéler le destinataire', async () => {
     const messages: MailMessage[] = [];
     const artisanService = new ArtisanService(models);

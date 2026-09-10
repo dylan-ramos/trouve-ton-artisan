@@ -126,6 +126,53 @@ describe('CatalogPage', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  test('conserve la recherche dans la pagination et charge la deuxième page', async () => {
+    const fetchMock = vi.fn().mockImplementation((input: string) => {
+      const page = Number(
+        new URL(input, 'http://localhost').searchParams.get('page'),
+      );
+      return Promise.resolve(
+        response({
+          data: [artisan(page === 1 ? 'Premier artisan' : 'Dernier artisan')],
+          meta: { page, limit: 12, total: 13, totalPages: 2 },
+        }),
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderRoute('/recherche?search=Labb%C3%A9');
+    const next = await screen.findByRole('link', { name: 'Suivante' });
+    expect(next).toHaveAttribute('href', '/recherche?search=Labb%C3%A9&page=2');
+    expect(
+      screen.queryByRole('link', { name: 'Précédente' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(next);
+    expect(await screen.findByText('Dernier artisan')).toBeInTheDocument();
+    expect(screen.queryByText('Premier artisan')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Suivante' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Précédente' })).toHaveAttribute(
+      'href',
+      '/recherche?search=Labb%C3%A9&page=1',
+    );
+  });
+
+  test('récupère après une panne de recherche sans perdre les paramètres', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Network failure'))
+      .mockResolvedValueOnce(response(list([artisan('Artisan retrouvé')])));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRoute('/recherche?search=artisan');
+    fireEvent.click(await screen.findByRole('button', { name: /réessayer/i }));
+    expect(await screen.findByText('Artisan retrouvé')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/artisans?search=artisan&page=1',
+      expect.any(Object),
+    );
+  });
+
   test('ignore une réponse devenue obsolète', async () => {
     let resolveOld: ((value: Response) => void) | undefined;
     const oldResponse = new Promise<Response>((resolve) => {

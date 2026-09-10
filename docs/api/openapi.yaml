@@ -6,6 +6,20 @@ info:
 servers:
   - url: /api
 paths:
+  /health:
+    get:
+      summary: Vérifie la disponibilité de l’API et de MySQL
+      responses:
+        '200':
+          description: API et base disponibles
+          content:
+            application/json:
+              example: { status: ok, database: connected }
+        '503':
+          description: Base indisponible
+          content:
+            application/json:
+              example: { status: unavailable, database: disconnected }
   /categories:
     get:
       summary: Liste les catégories et spécialités

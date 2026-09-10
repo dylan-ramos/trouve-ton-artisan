@@ -2,33 +2,35 @@
 
 ## Modèle conceptuel de données (MCD)
 
+[Source modifiable : mcd.mmd](diagrams/mcd.mmd).
+
 ```mermaid
 erDiagram
-    CATEGORY ||--o{ SPECIALTY : contient
-    SPECIALTY ||--o{ ARTISAN : regroupe
+    CATEGORIE ||..o{ SPECIALITE : contient
+    SPECIALITE ||..o{ ARTISAN : regroupe
 
-    CATEGORY {
-        number id
-        string name
-        string slug
-        number display_order
+    CATEGORIE {
+        identifiant id "Identifiant de la categorie"
+        texte nom
+        texte slug
+        entier ordre_affichage
     }
-    SPECIALTY {
-        number id
-        string name
-        string slug
+    SPECIALITE {
+        identifiant id "Identifiant de la specialite"
+        texte nom
+        texte slug
     }
     ARTISAN {
-        number id
-        string name
-        string slug
-        decimal rating
-        string city
-        text about
-        string contact_email
-        string website_url
-        string image_url
-        boolean is_featured
+        identifiant id "Identifiant de l artisan"
+        texte nom
+        texte slug
+        decimal note "De 0 a 5"
+        texte ville
+        texte presentation
+        texte email_contact "Prive"
+        texte site_web "Facultatif"
+        texte image "Facultative"
+        booleen mis_en_avant
     }
 ```
 
@@ -43,6 +45,48 @@ Règles de gestion du projet :
 - l'e-mail est nécessaire au contact, mais ne fait pas partie de son profil public.
 
 ## Modèle logique de données (MLD)
+
+[Source modifiable : mld.mmd](diagrams/mld.mmd).
+
+```mermaid
+erDiagram
+    categories ||..o{ specialties : contient
+    specialties ||..o{ artisans : regroupe
+
+    categories {
+        entier id PK
+        texte name UK
+        texte slug UK
+        entier display_order UK
+        horodatage created_at
+        horodatage updated_at
+    }
+    specialties {
+        entier id PK
+        entier category_id FK "Obligatoire ; unique avec name"
+        texte name "Unique avec category_id"
+        texte slug UK
+        horodatage created_at
+        horodatage updated_at
+    }
+    artisans {
+        entier id PK
+        entier specialty_id FK "Obligatoire"
+        texte name
+        texte slug UK
+        decimal rating "De 0 a 5 ; une decimale"
+        texte city
+        texte about
+        texte contact_email "Prive"
+        texte website_url "NULL autorise"
+        texte image_url "NULL autorise"
+        booleen is_featured
+        horodatage created_at
+        horodatage updated_at
+    }
+```
+
+Écriture relationnelle équivalente :
 
 ```text
 CATEGORY(
@@ -72,7 +116,7 @@ ARTISAN(
 - `DECIMAL(2,1)` représente exactement une note sur cinq, contrairement à un flottant approximatif.
 - `RESTRICT` empêche de supprimer une catégorie ou spécialité encore utilisée.
 - La catégorie n'est pas dupliquée sur l'artisan : cela évite des incohérences et respecte la troisième forme normale.
-- `contact_email` est stocké pour le serveur SMTP, mais les futurs DTO publics devront toujours l'exclure.
+- `contact_email` est stocké pour le serveur SMTP, mais les DTO publics l’excluent.
 
 ## Index
 
