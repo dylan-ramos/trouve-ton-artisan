@@ -1,0 +1,37 @@
+@use '../tokens' as tokens;
+
+.legal-page {
+  max-width: 52rem;
+}
+
+.legal-page__notice {
+  margin-block: 2rem;
+  padding: 1.5rem;
+  border-inline-start: 0.3rem solid tokens.$color-primary;
+  border-radius: tokens.$border-radius;
+  background: tokens.$color-surface;
+}
+
+.not-found-page {
+  max-width: 45rem;
+  text-align: center;
+}
+
+.not-found-page__illustration {
+  width: min(100%, 20rem);
+  height: auto;
+  margin-inline: auto;
+  fill: none;
+  stroke: tokens.$color-primary;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 8;
+}
+
+.not-found-page__code {
+  margin-block: 0;
+  color: tokens.$color-primary;
+  font-size: clamp(3rem, 12vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+}

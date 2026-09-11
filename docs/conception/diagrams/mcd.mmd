@@ -1,0 +1,27 @@
+erDiagram
+    CATEGORIE ||..o{ SPECIALITE : contient
+    SPECIALITE ||..o{ ARTISAN : regroupe
+
+    CATEGORIE {
+        identifiant id "Identifiant de la categorie"
+        texte nom
+        texte slug
+        entier ordre_affichage
+    }
+    SPECIALITE {
+        identifiant id "Identifiant de la specialite"
+        texte nom
+        texte slug
+    }
+    ARTISAN {
+        identifiant id "Identifiant de l artisan"
+        texte nom
+        texte slug
+        decimal note "De 0 a 5"
+        texte ville
+        texte presentation
+        texte email_contact "Prive"
+        texte site_web "Facultatif"
+        texte image "Facultative"
+        booleen mis_en_avant
+    }

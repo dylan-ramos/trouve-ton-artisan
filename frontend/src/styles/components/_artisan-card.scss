@@ -1,0 +1,82 @@
+@use '../tokens' as tokens;
+
+.artisan-grid {
+  display: grid;
+  margin-top: 2rem;
+  gap: 1.25rem;
+}
+.artisan-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(0 73 124 / 15%);
+  border-radius: tokens.$border-radius-lg;
+  background: tokens.$color-background;
+  box-shadow: tokens.$box-shadow;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+  &::before {
+    display: block;
+    height: 0.4rem;
+    background: tokens.$color-success;
+    content: '';
+  }
+  &:has(.artisan-card__link:hover) {
+    transform: translateY(-0.2rem);
+  }
+  &:has(.artisan-card__link:focus-visible) {
+    outline: 3px solid tokens.$color-primary;
+    outline-offset: 3px;
+  }
+}
+.artisan-card__body {
+  padding: 1.5rem;
+}
+.artisan-card__link {
+  color: tokens.$color-primary-dark;
+  text-decoration: none;
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+  }
+  &:focus-visible {
+    outline: 0;
+  }
+}
+.rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.rating__stars {
+  color: #a85d00;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+}
+.rating__value {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.artisan-card__details {
+  display: grid;
+  margin: 1.25rem 0 0;
+  gap: 0.75rem;
+  div {
+    display: grid;
+    grid-template-columns: minmax(6rem, 0.7fr) 1fr;
+    gap: 0.5rem;
+  }
+  dt {
+    font-weight: 650;
+  }
+  dd {
+    margin: 0;
+  }
+}
+@media (min-width: 768px) {
+  .artisan-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+}

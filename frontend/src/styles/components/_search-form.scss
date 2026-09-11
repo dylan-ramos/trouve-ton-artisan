@@ -1,0 +1,21 @@
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.5rem;
+  .form-control {
+    flex: 1 1 12rem;
+    width: auto;
+    min-width: 0;
+    min-height: 3rem;
+  }
+  .btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    min-width: 3rem;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+}

@@ -1,0 +1,30 @@
+# Isolated production-image rehearsal. Never uses the development database volume.
+services:
+  frontend:
+    ports:
+      - 127.0.0.1:${AUDIT_PORT:-5180}:8080
+    networks: !override
+      - application
+      - audit-access
+    labels: !reset []
+    environment:
+      TRAEFIK_TRUSTED_IP: 127.0.0.1
+  backend:
+    environment:
+      DB_NAME: trouve_ton_artisan_audit_test
+      SMTP_HOST: smtp.invalid
+    networks: !override
+      - application
+      - database
+  database:
+    environment:
+      MYSQL_DATABASE: trouve_ton_artisan_audit_test
+    volumes: !override
+      - ./database:/docker-entrypoint-initdb.d:ro
+    tmpfs:
+      - /var/lib/mysql
+networks:
+  audit-access:
+  proxy:
+    name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-audit-proxy
+    external: false

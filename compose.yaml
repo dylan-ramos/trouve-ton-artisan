@@ -1,0 +1,140 @@
+name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}
+
+x-logging: &bounded-logs
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  frontend:
+    logging: *bounded-logs
+    stop_grace_period: 15s
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-frontend:${APP_PROD_IMAGE_TAG:-production}
+    build:
+      context: .
+      dockerfile: .docker/frontend/Dockerfile
+      target: production
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginxinc/nginx-unprivileged}
+        NGINX_VERSION: ${NGINX_VERSION:-1.29}
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_SITE_URL: ${SITE_URL}
+    environment:
+      TRAEFIK_TRUSTED_IP: ${TRAEFIK_TRUSTED_IP:-127.0.0.1}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - application
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-proxy}
+      - traefik.http.routers.trouve-ton-artisan.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.trouve-ton-artisan.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.trouve-ton-artisan.tls=true
+      - traefik.http.routers.trouve-ton-artisan.tls.certresolver=${TRAEFIK_CERT_RESOLVER}
+      - traefik.http.services.trouve-ton-artisan.loadbalancer.server.port=8080
+    healthcheck:
+      test: [CMD, wget, --quiet, --tries=1, --spider, http://127.0.0.1:8080/health]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    logging: *bounded-logs
+    stop_grace_period: 20s
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-backend:${APP_PROD_IMAGE_TAG:-production}
+    build:
+      context: .
+      dockerfile: .docker/backend/Dockerfile
+      target: production
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    env_file:
+      - path: ./backend/.env
+        required: true
+      - path: ./backend/.env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      application:
+        aliases:
+          - trouve-ton-artisan-api
+      database:
+      egress:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  database:
+    logging: *bounded-logs
+    stop_grace_period: 60s
+    image: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-database:${APP_PROD_IMAGE_TAG:-production}
+    build:
+      context: .
+      dockerfile: .docker/database/Dockerfile
+      args:
+        MYSQL_VERSION: ${MYSQL_VERSION:-8.4}
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    networks:
+      - database
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  application:
+    internal: true
+  database:
+    internal: true
+  egress:
+  proxy:
+    name: ${TRAEFIK_NETWORK:-proxy}
+    external: true

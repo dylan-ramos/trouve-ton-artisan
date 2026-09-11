@@ -1,0 +1,52 @@
+name: ${COMPOSE_PROJECT_NAME:-trouve-ton-artisan}-test
+
+services:
+  database-test:
+    build:
+      context: .
+      dockerfile: .docker/database/Dockerfile
+      args:
+        MYSQL_VERSION: ${MYSQL_VERSION:-8.4}
+    environment:
+      MYSQL_DATABASE: ${DB_TEST_NAME:-trouve_ton_artisan_test}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d:ro
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - test-database
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  backend-test:
+    build:
+      context: .
+      dockerfile: .docker/backend/Dockerfile
+      target: development
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    command: npm test
+    environment:
+      NODE_ENV: test
+      INTEGRATION_TEST: "true"
+      DB_HOST: database-test
+      DB_PORT: 3306
+      DB_NAME: ${DB_TEST_NAME:-trouve_ton_artisan_test}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      database-test:
+        condition: service_healthy
+    networks:
+      - test-database
+
+networks:
+  test-database:
+    internal: true

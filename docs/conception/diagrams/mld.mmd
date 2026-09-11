@@ -1,0 +1,35 @@
+erDiagram
+    categories ||..o{ specialties : contient
+    specialties ||..o{ artisans : regroupe
+
+    categories {
+        entier id PK
+        texte name UK
+        texte slug UK
+        entier display_order UK
+        horodatage created_at
+        horodatage updated_at
+    }
+    specialties {
+        entier id PK
+        entier category_id FK "Obligatoire ; unique avec name"
+        texte name "Unique avec category_id"
+        texte slug UK
+        horodatage created_at
+        horodatage updated_at
+    }
+    artisans {
+        entier id PK
+        entier specialty_id FK "Obligatoire"
+        texte name
+        texte slug UK
+        decimal rating "De 0 a 5 ; une decimale"
+        texte city
+        texte about
+        texte contact_email "Prive"
+        texte website_url "NULL autorise"
+        texte image_url "NULL autorise"
+        booleen is_featured
+        horodatage created_at
+        horodatage updated_at
+    }

@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: Trouve ton artisan API
+  version: 0.8.0
+  description: API publique de consultation des artisans d'Auvergne-Rhône-Alpes.
+servers:
+  - url: /api
+paths:
+  /health:
+    get:
+      summary: Vérifie la disponibilité de l’API et de MySQL
+      responses:
+        '200':
+          description: API et base disponibles
+          content:
+            application/json:
+              example: { status: ok, database: connected }
+        '503':
+          description: Base indisponible
+          content:
+            application/json:
+              example: { status: unavailable, database: disconnected }
+  /categories:
+    get:
+      summary: Liste les catégories et spécialités
+      responses:
+        '200':
+          description: Catégories ordonnées
+          content:
+            application/json:
+              example:
+                data:
+                  - id: 1
+                    name: Bâtiment
+                    slug: batiment
+                    specialties: [{ id: 8, name: Plombier, slug: plombier }]
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /categories/{slug}/artisans:
+    get:
+      summary: Liste les artisans d'une catégorie
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Liste paginée }
+        '404': { description: Catégorie inconnue }
+        '422': { description: Paramètres invalides }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans:
+    get:
+      summary: Recherche et liste les artisans
+      parameters:
+        - { name: search, in: query, schema: { type: string, minLength: 1, maxLength: 100 } }
+        - { name: category, in: query, schema: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Liste paginée }
+        '422': { description: Paramètres invalides }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/featured:
+    get:
+      summary: Retourne les trois artisans du mois
+      responses:
+        '200': { description: Artisans mis en avant }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/{slug}:
+    get:
+      summary: Retourne la fiche publique d'un artisan
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      responses:
+        '200': { description: Fiche publique }
+        '404': { description: Artisan inconnu }
+        '422': { description: Slug invalide }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /artisans/{slug}/contact:
+    post:
+      summary: Transmet une demande de contact à un artisan
+      parameters: [{ $ref: '#/components/parameters/Slug' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContactRequest' }
+            example:
+              name: Camille Martin
+              email: camille@example.com
+              subject: Demande de devis
+              message: Bonjour, je souhaite obtenir un devis pour mon projet.
+              website: ''
+      responses:
+        '202': { description: Demande acceptée pour transmission }
+        '400': { description: JSON malformé }
+        '403': { description: Requête cross-site refusée }
+        '413': { description: Corps supérieur à 32 Kio }
+        '415': { description: Format ou encodage non pris en charge }
+        '404': { description: Artisan inconnu }
+        '422': { description: Corps ou champs invalides }
+        '429': { description: Limite de cinq messages en quinze minutes dépassée }
+        '503': { description: Transport de messagerie momentanément indisponible }
+components:
+  schemas:
+    ContactRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, subject, message]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 100 }
+        email: { type: string, format: email, maxLength: 254 }
+        subject: { type: string, minLength: 3, maxLength: 150 }
+        message: { type: string, minLength: 10, maxLength: 5000 }
+        website: { type: string, maxLength: 200, description: Champ anti-robot devant rester vide }
+  responses:
+    TooManyRequests:
+      description: Limite de 120 requêtes par minute dépassée
+      content:
+        application/json:
+          example:
+            error:
+              status: 429
+              message: Trop de requêtes. Veuillez réessayer dans un instant.
+  parameters:
+    Slug: { name: slug, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' } }
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, maximum: 10000, default: 1 } }
+    Limit: { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
