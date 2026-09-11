@@ -23,7 +23,7 @@ const application = createApplication({
   ),
 });
 
-const server = application.listen(environment.PORT, () => {
+const server = application.listen(environment.PORT, '0.0.0.0', () => {
   console.info(`API disponible sur le port ${String(environment.PORT)}.`);
 });
 
