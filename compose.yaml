@@ -76,9 +76,11 @@ services:
       database:
         condition: service_healthy
     networks:
-      - application
-      - database
-      - egress
+      application:
+        aliases:
+          - trouve-ton-artisan-api
+      database:
+      egress:
     security_opt:
       - no-new-privileges:true
     cap_drop:
